@@ -5,7 +5,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import java.awt.Dimension
-import org.company.app.ui.entrypoint.App
+import com.olcayaras.vidster.ui.App
 
 fun main() = application {
     Window(

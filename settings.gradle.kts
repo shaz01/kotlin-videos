@@ -1,4 +1,4 @@
-rootProject.name = "template"
+rootProject.name = "kotlin-videos"
 
 pluginManagement {
     includeBuild("build-logic")

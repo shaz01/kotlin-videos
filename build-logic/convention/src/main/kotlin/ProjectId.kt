@@ -1,1 +1,1 @@
-const val ProjectId = "com.olcayaras.template"
+const val ProjectId = "com.olcayaras.vidster"
