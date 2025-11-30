@@ -1,6 +1,5 @@
 package com.olcayaras.previewer
 
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.window.Window
