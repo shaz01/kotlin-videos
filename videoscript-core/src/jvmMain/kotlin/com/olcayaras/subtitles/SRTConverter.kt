@@ -1,5 +1,6 @@
-package com.olcayaras.lib.subtitles
+package com.olcayaras.subtitles
 
+import com.olcayaras.lib.subtitles.Subtitle
 import kotlin.time.Duration
 
 private fun Duration.toSRTFormat(): String {

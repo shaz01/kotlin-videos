@@ -1,4 +1,4 @@
-package com.olcayaras.previewer
+package com.olcayaras.vidster.previewer
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.IntSize

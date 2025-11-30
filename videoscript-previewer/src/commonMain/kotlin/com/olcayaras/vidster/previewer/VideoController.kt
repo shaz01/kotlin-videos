@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalTime::class)
 
-package com.olcayaras.previewer
+package com.olcayaras.vidster.previewer
 
 import androidx.compose.runtime.*
 import com.olcayaras.lib.asDuration

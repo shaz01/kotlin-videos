@@ -43,4 +43,5 @@ include(":app:backend")
 include(":app:shared")
 include(":videoscript-core")
 include(":videoscript-previewer")
+include(":videoscript-rendering")
 

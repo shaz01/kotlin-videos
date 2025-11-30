@@ -1,4 +1,4 @@
-package com.olcayaras.previewer
+package com.olcayaras.vidster.previewer
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.dp
 import com.olcayaras.lib.AudioController
 import com.olcayaras.lib.definitions.SequencesAsVideo
 import com.olcayaras.lib.definitions.VideoDefinition
-import com.olcayaras.previewer.previewers.VideoPlayer
+import com.olcayaras.vidster.previewer.previewers.VideoPlayer
 import kotlin.time.DurationUnit
 
 @Composable

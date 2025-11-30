@@ -1,4 +1,4 @@
-package com.olcayaras.previewer.previewers
+package com.olcayaras.vidster.previewer.previewers
 
 import androidx.compose.foundation.background
 import androidx.compose.runtime.Composable
@@ -9,8 +9,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.IntSize
 import com.olcayaras.lib.LocalCurrentFrame
 import com.olcayaras.lib.LocalFPS
-import com.olcayaras.previewer.VideoController
-import com.olcayaras.previewer.utils.ScaleBox
+import com.olcayaras.vidster.previewer.VideoController
+import com.olcayaras.vidster.previewer.utils.ScaleBox
 
 @Composable
 fun VideoPlayer(

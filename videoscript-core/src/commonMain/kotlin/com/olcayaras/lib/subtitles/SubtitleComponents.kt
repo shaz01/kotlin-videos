@@ -1,4 +1,4 @@
-package composables.subtitles
+package com.olcayaras.lib.subtitles
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -22,7 +22,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.olcayaras.lib.currentDuration
-import com.olcayaras.lib.subtitles.Subtitle
 import com.olcayaras.lib.videobuilders.SequenceScope
 import com.olcayaras.lib.videobuilders.SequenceWithTTSScope
 import kotlin.time.Duration.Companion.seconds
