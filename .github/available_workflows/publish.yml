@@ -1,0 +1,87 @@
+name: Publish package on git push
+
+# change the part with "ENTER MODULE NAME HERE" before using.
+# this workflow will publish the module to GitHub Packages when a new version is pushed to main.
+
+on:
+  push:
+    branches:
+      - 'main'
+
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      actions: write
+    concurrency:
+      group: publish-${{ github.ref }}
+      cancel-in-progress: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          # cache: gradle -- checking if it's slowing it down.
+
+      - name: Read Gradle coordinates (group/name/version)
+        id: gav
+        shell: bash
+        run: |
+          MODULE="ENTER MODULE NAME HERE"
+          FILE="$MODULE/build.gradle.kts"
+          GROUP=$(sed -nE 's/^\s*group\s*=\s*"([^"]+)".*/\1/p' "$FILE" | head -n1)
+          VERSION=$(sed -nE 's/^\s*version\s*=\s*"([^"]+)".*/\1/p' "$FILE" | head -n1)
+          echo "group=$GROUP" >> $GITHUB_OUTPUT
+          echo "artifact=$MODULE" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Check if this version is already published
+        id: check
+        env:
+          GH_USER: ${{ github.actor }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GROUP: ${{ steps.gav.outputs.group }}
+          ARTIFACT: ${{ steps.gav.outputs.artifact }}
+          VERSION: ${{ steps.gav.outputs.version }}
+          REPO: ${{ github.repository }}   # owner/repo
+        run: |
+          GROUP_PATH=${GROUP//./\/}
+          POM_URL="https://maven.pkg.github.com/${REPO}/${GROUP_PATH}/${ARTIFACT}/${VERSION}/${ARTIFACT}-${VERSION}.pom"
+          echo "Probing $POM_URL"
+          if curl -fsI -u "${GH_USER}:${GH_TOKEN}" "$POM_URL" > /dev/null; then
+            echo "should_publish=false" >> "$GITHUB_OUTPUT"
+            echo "Version $VERSION already exists in GitHub Packages; skipping publish."
+          else
+            echo "should_publish=true" >> "$GITHUB_OUTPUT"
+            echo "Version $VERSION not found; will publish."
+          fi
+          
+      - name: Set up gradle (caching)
+        uses: gradle/actions/setup-gradle@v4
+        if: steps.check.outputs.should_publish == 'true'
+        with:
+          develocity-injection-enabled: false
+          build-scan-publish: false
+
+      - name: Make gradlew executable
+        if: steps.check.outputs.should_publish == 'true'
+        run: chmod +x gradlew
+
+      - name: Publish
+        if: steps.check.outputs.should_publish == 'true'
+        env: 
+          GH_USERNAME: ${{ github.actor }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./gradlew publishAllPublicationsToGitHubPackagesRepository
+
+
+      - name: Notify if skipped
+        if: steps.check.outputs.should_publish != 'true'
+        run: echo "Skipped publishing because version has been published before."

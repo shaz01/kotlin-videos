@@ -1,0 +1,18 @@
+### Apply like this:
+# plugins {
+#    id("convention.compose.decompose")
+# }
+###
+
+[versions]
+essenty = "2.5.0"
+decompose = "3.3.0"
+
+[libraries]
+decompose = { module = "com.arkivanov.decompose:decompose", version.ref = "decompose" }
+decompose-compose = { module = "com.arkivanov.decompose:extensions-compose-experimental", version.ref = "decompose" }
+decompose-instancekeeper = { module = "com.arkivanov.essenty:instance-keeper", version.ref = "essenty" }
+decompose-statekeeper = { module = "com.arkivanov.essenty:state-keeper", version.ref = "essenty" }
+decompose-lifecycle = { module = "com.arkivanov.essenty:lifecycle", version.ref = "essenty" }
+
+[plugins]
