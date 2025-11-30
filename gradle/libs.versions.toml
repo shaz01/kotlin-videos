@@ -13,8 +13,11 @@ kotlinx-json = "1.9.0"
 logback = "1.5.18"
 koin = "4.1.1"
 molecule = "2.1.0"
+kotlinx-io = "0.8.0"
 
 [libraries]
+kotlinx-io = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinx-io" }
+
 # KmpBasePlugin.kt ========================================
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }
