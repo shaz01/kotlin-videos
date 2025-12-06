@@ -18,6 +18,7 @@ kotlin {
             implementation(libs.molecule)
             implementation(project(":figures"))
             implementation(project(":videoscript-previewer"))
+            implementation(project(":videoscript-core"))
         }
 
         androidMain.dependencies {

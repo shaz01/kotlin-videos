@@ -37,6 +37,16 @@ interface MediaResourceScope {
     suspend fun video(path: String, start: Duration = 0.seconds, end: MediaEnd): MediaResource.Video
 }
 
+object NoOpMediaResourceScope: MediaResourceScope {
+    override suspend fun video(
+        path: String,
+        start: Duration,
+        end: MediaEnd
+    ): MediaResource.Video {
+        throw NotImplementedError()
+    }
+}
+
 expect fun createMediaResourceScope(fps: Int): MediaResourceScope
 
 
