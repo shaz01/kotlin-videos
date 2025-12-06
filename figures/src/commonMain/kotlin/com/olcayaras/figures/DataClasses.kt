@@ -29,6 +29,45 @@ data class FigureFrame(
     )
 }
 
+// --------------------------------------------------------------------------------------------
+// Deep copy functions for frame independence
+
+/**
+ * Creates a deep copy of a Joint and its entire child hierarchy.
+ * This ensures that modifying a joint in one frame doesn't affect other frames.
+ */
+fun Joint.deepCopy(): Joint {
+    return Joint(
+        id = id,
+        length = length,
+        angle = angle,
+        children = children.mapTo(mutableListOf()) { it.deepCopy() }
+    )
+}
+
+/**
+ * Creates a deep copy of a Figure, including its root joint hierarchy.
+ */
+fun Figure.deepCopy(): Figure {
+    return Figure(
+        name = name,
+        root = root.deepCopy(),
+        x = x,
+        y = y
+    )
+}
+
+/**
+ * Creates a deep copy of a FigureFrame with all figures deeply cloned.
+ * This ensures frame independence for animation.
+ */
+fun FigureFrame.deepCopy(): FigureFrame {
+    return FigureFrame(
+        figures = figures.map { it.deepCopy() },
+        viewport = viewport.copy(),
+        viewportTransition = viewportTransition
+    )
+}
 
 // --------------------------------------------------------------------------------------------
 
