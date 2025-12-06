@@ -15,6 +15,7 @@ import com.olcayaras.figures.FigureFrame
 import com.olcayaras.figures.Joint
 import com.olcayaras.figures.SegmentFrame
 import com.olcayaras.figures.Viewport
+import com.olcayaras.figures.deepCopy
 import com.olcayaras.figures.getMockFigure
 
 sealed interface EditorEvent {
@@ -77,7 +78,7 @@ class EditorViewModel(c: ComponentContext) : ViewModel<EditorEvent, EditorState>
     private fun addFrame() {
         // Clone the current frame or create a new one
         val currentFrame = _frames.value.getOrNull(_selectedFrameIndex.value)
-        val newFrame = currentFrame?.copy() ?: FigureFrame(
+        val newFrame = currentFrame?.deepCopy() ?: FigureFrame(
             figures = listOf(getMockFigure(x = 400f, y = 300f)),
             viewport = Viewport()
         )
