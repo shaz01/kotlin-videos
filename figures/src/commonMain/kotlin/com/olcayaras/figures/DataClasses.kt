@@ -29,6 +29,45 @@ data class FigureFrame(
     )
 }
 
+// --------------------------------------------------------------------------------------------
+// Deep copy functions for frame independence
+
+/**
+ * Creates a deep copy of a Joint and its entire child hierarchy.
+ * This ensures that modifying a joint in one frame doesn't affect other frames.
+ */
+fun Joint.deepCopy(): Joint {
+    return Joint(
+        id = id,
+        length = length,
+        angle = angle,
+        children = children.mapTo(mutableListOf()) { it.deepCopy() }
+    )
+}
+
+/**
+ * Creates a deep copy of a Figure, including its root joint hierarchy.
+ */
+fun Figure.deepCopy(): Figure {
+    return Figure(
+        name = name,
+        root = root.deepCopy(),
+        x = x,
+        y = y
+    )
+}
+
+/**
+ * Creates a deep copy of a FigureFrame with all figures deeply cloned.
+ * This ensures frame independence for animation.
+ */
+fun FigureFrame.deepCopy(): FigureFrame {
+    return FigureFrame(
+        figures = figures.map { it.deepCopy() },
+        viewport = viewport.copy(),
+        viewportTransition = viewportTransition
+    )
+}
 
 // --------------------------------------------------------------------------------------------
 
@@ -65,6 +104,66 @@ fun compileFigure(figure: Figure): List<Segment> =
     compileJoints(root = figure.root, startX = figure.x, startY = figure.y)
 
 fun Figure.compile() = compileFigure(this)
+
+// --------------------------------------------------------------------------------------------
+// Interactive editing support - CompiledJoint preserves hierarchy and world positions
+
+/**
+ * A compiled joint that preserves the reference to the original [Joint] for editing,
+ * along with computed world positions for hit testing and rendering.
+ *
+ * @param joint Reference to the original joint (for editing angle)
+ * @param figure Reference to the figure this joint belongs to
+ * @param startX World X position where this joint connects to parent
+ * @param startY World Y position where this joint connects to parent
+ * @param endX World X position of joint tip (where red dot renders)
+ * @param endY World Y position of joint tip
+ * @param parentWorldAngle Accumulated angle from root to parent (for angle calculation)
+ */
+data class CompiledJoint(
+    val joint: Joint,
+    val figure: Figure,
+    val startX: Float,
+    val startY: Float,
+    val endX: Float,
+    val endY: Float,
+    val parentWorldAngle: Float
+)
+
+/**
+ * Compiles a figure into a list of [CompiledJoint]s with world positions.
+ * Used for interactive editing - hit testing and joint manipulation.
+ */
+fun compileJointsForEditing(
+    figure: Figure,
+    joint: Joint,
+    startX: Float,
+    startY: Float,
+    parentWorldAngle: Float = 0f
+): List<CompiledJoint> {
+    val worldAngle = parentWorldAngle + joint.angle
+    val endX = startX + joint.length * cos(worldAngle)
+    val endY = startY + joint.length * sin(worldAngle)
+
+    val compiled = CompiledJoint(
+        joint = joint,
+        figure = figure,
+        startX = startX,
+        startY = startY,
+        endX = endX,
+        endY = endY,
+        parentWorldAngle = parentWorldAngle
+    )
+
+    val childJoints = joint.children.flatMap { child ->
+        compileJointsForEditing(figure, child, endX, endY, worldAngle)
+    }
+
+    return listOf(compiled) + childJoints
+}
+
+fun Figure.compileForEditing(): List<CompiledJoint> =
+    compileJointsForEditing(this, root, x, y)
 
 // --------------------------------------------------------------------------------------------
 
