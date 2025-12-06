@@ -41,6 +41,8 @@ plugins {
 include(":app:composeApp")
 include(":app:backend")
 include(":app:shared")
+include(":figures")
+
 include(":videoscript-core")
 include(":videoscript-previewer")
 include(":videoscript-rendering")
