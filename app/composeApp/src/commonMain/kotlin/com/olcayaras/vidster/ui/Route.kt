@@ -11,8 +11,8 @@ import com.olcayaras.vidster.ViewModel
 import com.olcayaras.vidster.ui.navigation.NavigationFactory
 import com.olcayaras.vidster.ui.screens.detail.DetailScreen
 import com.olcayaras.vidster.ui.screens.detail.DetailViewModel
-import com.olcayaras.vidster.ui.screens.home.HomeScreen
-import com.olcayaras.vidster.ui.screens.home.HomeViewModel
+import com.olcayaras.vidster.ui.screens.editor.EditorScreen
+import com.olcayaras.vidster.ui.screens.editor.EditorViewModel
 
 /**
  * Base routes for the app.
@@ -20,14 +20,14 @@ import com.olcayaras.vidster.ui.screens.home.HomeViewModel
 @Serializable
 sealed class Route {
     @Serializable
-    data object Home : Route()
+    data object Editor : Route()
 
     @Serializable
     data class Detail(val name: String) : Route()
 
 
     companion object : NavigationFactory<Route> {
-        override val initialRoute: Route = Home
+        override val initialRoute: Route = Editor
         override val kSerializer: KSerializer<Route> get() = serializer()
 
         override fun createChild(
@@ -36,18 +36,19 @@ sealed class Route {
             navigation: StackNavigation<Route>,
         ): ViewModel<*, *> {
             return when (route) {
-                Home -> HomeViewModel(componentContext, navigation)
                 is Detail -> DetailViewModel(componentContext, navigation, route.name)
+                is Editor -> EditorViewModel(componentContext)
             }
         }
 
         @Composable
-        override fun childContent(viewModel: ViewModel<*,*>) {
+        override fun childContent(viewModel: ViewModel<*, *>) {
             when (viewModel) {
-                is HomeViewModel -> {
+                is EditorViewModel -> {
                     val state by viewModel.models.collectAsState()
-                    HomeScreen(state, viewModel::take)
+                    EditorScreen(state, viewModel::take)
                 }
+
                 is DetailViewModel -> {
                     val state by viewModel.models.collectAsState()
                     DetailScreen(state, viewModel::take)

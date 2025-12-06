@@ -16,6 +16,8 @@ kotlin {
             implementation(ktorhttp.client.content.negotiation)
             implementation(ktorhttp.serialization)
             implementation(libs.molecule)
+            implementation(project(":figures"))
+            implementation(project(":videoscript-previewer"))
         }
 
         androidMain.dependencies {
