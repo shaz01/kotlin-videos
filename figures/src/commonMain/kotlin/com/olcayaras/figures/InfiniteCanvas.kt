@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.input.pointer.PointerEvent
+import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
@@ -63,6 +64,24 @@ fun InfiniteCanvas(
     Canvas(
         modifier = modifier
             .background(Color.White)
+            // Scroll wheel zoom (desktop)
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent()
+                        if (event.type == PointerEventType.Scroll) {
+                            val scrollDelta = event.changes.first().scrollDelta
+                            val zoomFactor = if (scrollDelta.y > 0) 0.9f else 1.1f
+                            val position = event.changes.first().position
+                            currentOnCanvasStateChange(
+                                currentCanvasState.zoom(zoomFactor, position.x, position.y)
+                            )
+                            event.changes.forEach { it.consume() }
+                        }
+                    }
+                }
+            }
+            // Touch/click gestures
             .pointerInput(Unit) {
                 awaitEachGesture {
                     val firstDown = awaitFirstDown(requireUnconsumed = false)
@@ -90,6 +109,7 @@ fun InfiniteCanvas(
                                 change = event.changes.first(),
                                 dragTarget = dragTarget,
                                 canvasState = currentCanvasState,
+                                onCanvasStateChange = currentOnCanvasStateChange,
                                 onJointAngleChanged = currentOnJointAngleChanged,
                                 onFigureMoved = currentOnFigureMoved
                             )
@@ -182,11 +202,12 @@ private fun handleMultiTouch(
     event.changes.forEach { it.consume() }
 }
 
-/** Handles single-finger drag: rotates joints or moves figures based on drag target. */
+/** Handles single-finger drag: rotates joints, moves figures, or pans canvas. */
 private fun handleSingleTouch(
     change: PointerInputChange,
     dragTarget: DragTarget?,
     canvasState: CanvasState,
+    onCanvasStateChange: (CanvasState) -> Unit,
     onJointAngleChanged: (Figure, Joint, Float) -> Unit,
     onFigureMoved: (Figure, Float, Float) -> Unit
 ) {
@@ -211,7 +232,10 @@ private fun handleSingleTouch(
         }
 
         null -> {
-            // No target - do nothing (two fingers required for canvas pan)
+            // No target - pan the canvas (single-finger pan for desktop & mobile)
+            val delta = change.position - change.previousPosition
+            onCanvasStateChange(canvasState.pan(delta.x, delta.y))
+            change.consume()
         }
     }
 }
