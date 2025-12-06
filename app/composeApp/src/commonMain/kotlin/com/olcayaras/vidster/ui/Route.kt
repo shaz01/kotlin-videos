@@ -9,8 +9,6 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import com.olcayaras.vidster.ViewModel
 import com.olcayaras.vidster.ui.navigation.NavigationFactory
-import com.olcayaras.vidster.ui.screens.detail.DetailScreen
-import com.olcayaras.vidster.ui.screens.detail.DetailViewModel
 import com.olcayaras.vidster.ui.screens.editor.EditorScreen
 import com.olcayaras.vidster.ui.screens.editor.EditorViewModel
 
@@ -21,9 +19,6 @@ import com.olcayaras.vidster.ui.screens.editor.EditorViewModel
 sealed class Route {
     @Serializable
     data object Editor : Route()
-
-    @Serializable
-    data class Detail(val name: String) : Route()
 
 
     companion object : NavigationFactory<Route> {
@@ -36,7 +31,6 @@ sealed class Route {
             navigation: StackNavigation<Route>,
         ): ViewModel<*, *> {
             return when (route) {
-                is Detail -> DetailViewModel(componentContext, navigation, route.name)
                 is Editor -> EditorViewModel(componentContext)
             }
         }
@@ -47,11 +41,6 @@ sealed class Route {
                 is EditorViewModel -> {
                     val state by viewModel.models.collectAsState()
                     EditorScreen(state, viewModel::take)
-                }
-
-                is DetailViewModel -> {
-                    val state by viewModel.models.collectAsState()
-                    DetailScreen(state, viewModel::take)
                 }
 
                 else -> throw IllegalStateException("Instance is $viewModel but that class is not known")
