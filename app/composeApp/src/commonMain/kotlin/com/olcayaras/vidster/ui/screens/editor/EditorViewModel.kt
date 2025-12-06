@@ -39,19 +39,15 @@ data class EditorState(
     val figureModificationCount: Long = 0L,
     val screenSize: IntSize = IntSize(1920, 1080)
 ) {
-    val selectedFrame: FigureFrame?
-        get() = frames.getOrNull(selectedFrameIndex)
+    val selectedFrame: FigureFrame? get() = frames.getOrNull(selectedFrameIndex)
 
-    val selectedFigures: List<Figure>
-        get() = selectedFrame?.figures ?: emptyList()
+    val selectedFigures: List<Figure> get() = selectedFrame?.figures ?: emptyList()
 
     // Compile selected frame for timeline preview
-    val selectedSegmentFrame: SegmentFrame?
-        get() = selectedFrame?.compile()
+    val selectedSegmentFrame: SegmentFrame? = selectedFrame?.compile()
 
     // Compile all frames for timeline thumbnails
-    val segmentFrames: List<SegmentFrame>
-        get() = frames.map { it.compile() }
+    val segmentFrames: List<SegmentFrame> = frames.map { it.compile() }
 }
 
 class EditorViewModel(c: ComponentContext) : ViewModel<EditorEvent, EditorState>(c) {
@@ -78,11 +74,14 @@ class EditorViewModel(c: ComponentContext) : ViewModel<EditorEvent, EditorState>
     private fun addFrame() {
         // Clone the current frame or create a new one
         val currentFrame = _frames.value.getOrNull(_selectedFrameIndex.value)
-        val newFrame = currentFrame?.deepCopy() ?: FigureFrame(
-            figures = listOf(getMockFigure(x = 400f, y = 300f)),
-            viewport = Viewport()
-        )
-        _frames.value = _frames.value + newFrame
+        val newFrame = currentFrame?.deepCopy()
+            ?: _frames.value.lastOrNull()?.deepCopy()
+            ?: FigureFrame(
+                figures = listOf(getMockFigure(x = 400f, y = 300f)),
+                viewport = Viewport()
+            )
+
+        _frames.value += newFrame
         _selectedFrameIndex.value = _frames.value.lastIndex
     }
 

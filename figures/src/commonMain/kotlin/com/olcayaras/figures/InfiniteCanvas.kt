@@ -24,7 +24,6 @@ import androidx.compose.ui.input.pointer.PointerEvent
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
-import io.github.aakira.napier.Napier
 import kotlin.math.atan2
 import kotlin.math.sqrt
 
@@ -51,7 +50,7 @@ fun InfiniteCanvas(
     }
 
     // Update compiled joints when figures are modified
-    LaunchedEffect(figureModificationCount) {
+    LaunchedEffect(figures, figureModificationCount) {
         compiledJointsForDrawing = figures.flatMap { it.compileForEditing() }
     }
 
@@ -198,7 +197,6 @@ private fun handleSingleTouch(
 
     when (dragTarget) {
         is DragTarget.JointRotation -> {
-            Napier.d { "Joint rotation" }
             val compiled = dragTarget.compiledJoint
             val newWorldAngle = atan2(canvasY - compiled.startY, canvasX - compiled.startX)
             val newRelativeAngle = newWorldAngle - compiled.parentWorldAngle
@@ -207,14 +205,12 @@ private fun handleSingleTouch(
         }
 
         is DragTarget.FigureMove -> {
-            Napier.d { "Figure move" }
             val figure = dragTarget.figure
             onFigureMoved(figure, figure.x + (canvasX - prevCanvasX), figure.y + (canvasY - prevCanvasY))
             change.consume()
         }
 
         null -> {
-            Napier.d { "No drag target found" }
             // No target - do nothing (two fingers required for canvas pan)
         }
     }
@@ -270,8 +266,12 @@ private fun findHitSegment(
     return compiledJoints
         .asSequence()
         .filter { it.joint.length > 0f }
-        .minByOrNull { pointToSegmentDistance(canvasX, canvasY, it.startX, it.startY, it.endX, it.endY) }
-        ?.takeIf { pointToSegmentDistance(canvasX, canvasY, it.startX, it.startY, it.endX, it.endY) <= hitDistance }
+        .associateWith {
+            pointToSegmentDistance(canvasX, canvasY, it.startX, it.startY, it.endX, it.endY)
+        }
+        .minByOrNull { it.value }
+        ?.takeIf { it.value <= hitDistance }
+        ?.key
 }
 
 /** Euclidean distance between two points. */
