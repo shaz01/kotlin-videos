@@ -35,10 +35,10 @@ fun EditorScreen(
             rotationAllowed = true,
             onCanvasStateChange = { take(EditorEvent.UpdateCanvasState(it)) },
             onJointAngleChanged = { figure, joint, angle ->
-                take(EditorEvent.UpdateJointAngle(figure, joint, angle))
+                take(EditorEvent.UpdateJointAngle(figure.name, joint.id, angle))
             },
             onFigureMoved = { figure, newX, newY ->
-                take(EditorEvent.MoveFigure(figure, newX, newY))
+                take(EditorEvent.MoveFigure(figure.name, newX, newY))
             }
         )
 

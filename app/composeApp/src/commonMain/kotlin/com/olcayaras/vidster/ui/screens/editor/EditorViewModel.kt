@@ -26,9 +26,9 @@ sealed interface EditorEvent {
     // Canvas operations
     data class UpdateCanvasState(val canvasState: CanvasState) : EditorEvent
 
-    // Figure editing
-    data class UpdateJointAngle(val figure: Figure, val joint: Joint, val newAngle: Float) : EditorEvent
-    data class MoveFigure(val figure: Figure, val newX: Float, val newY: Float) : EditorEvent
+    // Figure editing - using identifiers instead of object references for safety
+    data class UpdateJointAngle(val figureName: String, val jointId: String, val newAngle: Float) : EditorEvent
+    data class MoveFigure(val figureName: String, val newX: Float, val newY: Float) : EditorEvent
 }
 
 data class EditorState(
@@ -102,21 +102,42 @@ class EditorViewModel(c: ComponentContext) : ViewModel<EditorEvent, EditorState>
         _canvasState.value = state
     }
 
-    private fun updateJointAngle(joint: Joint, newAngle: Float) {
-        // Update the joint's angle directly (Joint has mutable angle)
+    private fun updateJointAngle(figureName: String, jointId: String, newAngle: Float) {
+        // Validate: Find figure and joint in current selected frame
+        val currentFrame = _frames.value.getOrNull(_selectedFrameIndex.value) ?: return
+        val figure = currentFrame.figures.find { it.name == figureName } ?: return
+        val joint = findJointById(figure.root, jointId) ?: return
+
+        // Update the joint's angle
         joint.angle = newAngle
 
         // Increment modification count to trigger recomposition
         _figureModificationCount.value++
     }
 
-    private fun moveFigure(figure: Figure, newX: Float, newY: Float) {
-        // Update figure position directly (Figure has mutable x/y)
+    private fun moveFigure(figureName: String, newX: Float, newY: Float) {
+        // Validate: Find figure in current selected frame
+        val currentFrame = _frames.value.getOrNull(_selectedFrameIndex.value) ?: return
+        val figure = currentFrame.figures.find { it.name == figureName } ?: return
+
+        // Update figure position
         figure.x = newX
         figure.y = newY
 
         // Increment modification count to trigger recomposition
         _figureModificationCount.value++
+    }
+
+    /**
+     * Recursively searches for a joint by ID in the joint hierarchy.
+     * Returns null if not found.
+     */
+    private fun findJointById(joint: Joint, targetId: String): Joint? {
+        if (joint.id == targetId) return joint
+        for (child in joint.children) {
+            findJointById(child, targetId)?.let { return it }
+        }
+        return null
     }
 
     @Composable
@@ -133,8 +154,8 @@ class EditorViewModel(c: ComponentContext) : ViewModel<EditorEvent, EditorState>
                     is EditorEvent.AddFrame -> addFrame()
                     is EditorEvent.RemoveFrame -> removeFrame(event.index)
                     is EditorEvent.UpdateCanvasState -> updateCanvasState(event.canvasState)
-                    is EditorEvent.UpdateJointAngle -> updateJointAngle(event.joint, event.newAngle)
-                    is EditorEvent.MoveFigure -> moveFigure(event.figure, event.newX, event.newY)
+                    is EditorEvent.UpdateJointAngle -> updateJointAngle(event.figureName, event.jointId, event.newAngle)
+                    is EditorEvent.MoveFigure -> moveFigure(event.figureName, event.newX, event.newY)
                 }
             }
         }
