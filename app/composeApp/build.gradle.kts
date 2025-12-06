@@ -35,17 +35,17 @@ kotlin {
 
 android {
     namespace = "$ProjectId.app"
-    compileSdk = 36
+    compileSdk = AndroidConfig.compileSdk
 
     defaultConfig {
-        minSdk = 21
-        targetSdk = 36
+        minSdk = AndroidConfig.minSdk
+        targetSdk = AndroidConfig.compileSdk
 
         applicationId = "$ProjectId.androidApp"
         versionCode = 1
         versionName = "1.0.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = AndroidConfig.testInstrumentationRunner
     }
 }
 
