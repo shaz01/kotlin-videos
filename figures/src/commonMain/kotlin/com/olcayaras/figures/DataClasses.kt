@@ -41,7 +41,7 @@ fun Joint.deepCopy(): Joint {
         id = id,
         length = length,
         angle = angle,
-        children = children.map { it.deepCopy() }.toMutableList()
+        children = children.mapTo(mutableListOf()) { it.deepCopy() }
     )
 }
 
