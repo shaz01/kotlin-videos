@@ -37,7 +37,7 @@ interface MediaResourceScope {
     suspend fun video(path: String, start: Duration = 0.seconds, end: MediaEnd): MediaResource.Video
 }
 
-object NoOpMediaResourceScope: MediaResourceScope {
+object NoOpMediaResourceScope : MediaResourceScope {
     override suspend fun video(
         path: String,
         start: Duration,
