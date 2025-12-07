@@ -43,7 +43,7 @@ object NoOpMediaResourceScope : MediaResourceScope {
         start: Duration,
         end: MediaEnd
     ): MediaResource.Video {
-        throw NotImplementedError()
+        throw NotImplementedError("Video resources are not supported in NoOpMediaResourceScope (stub implementation)")
     }
 }
 
