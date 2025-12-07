@@ -86,15 +86,20 @@ data class SegmentFrame(
     val viewportTransition: ViewportTransition = ViewportTransition.None
 )
 
-fun compileJoints(root: Joint, startX: Float, startY: Float): List<Segment> {
-    val dx = root.length * cos(root.angle)
-    val dy = root.length * sin(root.angle)
-
+fun compileJoints(
+    root: Joint,
+    startX: Float,
+    startY: Float,
+    parentWorldAngle: Float = 0f
+): List<Segment> {
+    val worldAngle = parentWorldAngle + root.angle
+    val dx = root.length * cos(worldAngle)
+    val dy = root.length * sin(worldAngle)
 
     val result = root.children.flatMap { child ->
-        compileJoints(root = child, startX + dx, startY + dy)
+        compileJoints(root = child, startX + dx, startY + dy, worldAngle)
     }
-    return result + Segment(root.length, root.angle, startX, startY)
+    return result + Segment(root.length, worldAngle, startX, startY)
 }
 
 fun Joint.compile() = compileJoints(root = this, startX = 0f, startY = 0f)

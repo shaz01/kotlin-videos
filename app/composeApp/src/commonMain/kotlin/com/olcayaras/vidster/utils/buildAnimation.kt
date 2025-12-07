@@ -2,7 +2,6 @@ package com.olcayaras.vidster.utils
 
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.Transition
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.IntSize
@@ -18,7 +17,7 @@ import com.olcayaras.lib.videobuilders.buildVideo
 suspend fun buildAnimation(
     frames: List<SegmentFrame>,
     screenSize: IntSize,
-    fps: Int = 60
+    fps: Int = 3
 ): VideoDefinition {
     return buildVideo(fps = fps, ttsProvider = NoOpTTSProvider()) {
         frames.forEach { frame ->

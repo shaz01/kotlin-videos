@@ -17,6 +17,7 @@ import com.olcayaras.figures.SegmentFrame
 import com.olcayaras.figures.Viewport
 import com.olcayaras.figures.deepCopy
 import com.olcayaras.figures.getMockFigure
+import io.github.aakira.napier.Napier
 
 sealed interface EditorEvent {
     // Frame management
@@ -30,6 +31,9 @@ sealed interface EditorEvent {
     // Figure editing
     data class UpdateJointAngle(val figure: Figure, val joint: Joint, val newAngle: Float) : EditorEvent
     data class MoveFigure(val figure: Figure, val newX: Float, val newY: Float) : EditorEvent
+
+    // Playback
+    data object PlayAnimation : EditorEvent
 }
 
 data class EditorState(
@@ -50,7 +54,10 @@ data class EditorState(
     val segmentFrames: List<SegmentFrame> = frames.map { it.compile() }
 }
 
-class EditorViewModel(c: ComponentContext) : ViewModel<EditorEvent, EditorState>(c) {
+class EditorViewModel(
+    c: ComponentContext,
+    private val onPlayAnimation: (frames: List<SegmentFrame>, screenSize: IntSize) -> Unit = { _, _ -> }
+) : ViewModel<EditorEvent, EditorState>(c) {
     private val _frames = MutableStateFlow<List<FigureFrame>>(emptyList())
     private val _selectedFrameIndex = MutableStateFlow(0)
     private val _canvasState = MutableStateFlow(CanvasState())
@@ -68,6 +75,8 @@ class EditorViewModel(c: ComponentContext) : ViewModel<EditorEvent, EditorState>
     private fun selectFrame(index: Int) {
         if (index in _frames.value.indices) {
             _selectedFrameIndex.value = index
+        } else {
+            Napier.e { "Invalid frame index: $index" }
         }
     }
 
@@ -119,12 +128,18 @@ class EditorViewModel(c: ComponentContext) : ViewModel<EditorEvent, EditorState>
         _figureModificationCount.value++
     }
 
+    private fun playAnimation(screenSize: IntSize) {
+        val segmentFrames = _frames.value.map { it.compile() }
+        onPlayAnimation(segmentFrames, screenSize)
+    }
+
     @Composable
     override fun models(events: Flow<EditorEvent>): EditorState {
         val frames by _frames.collectAsState()
         val selectedFrameIndex by _selectedFrameIndex.collectAsState()
         val canvasState by _canvasState.collectAsState()
         val figureModificationCount by _figureModificationCount.collectAsState()
+        val screenSize = IntSize(1920, 1080)
 
         LaunchedEffect(events) {
             events.collect { event ->
@@ -135,10 +150,11 @@ class EditorViewModel(c: ComponentContext) : ViewModel<EditorEvent, EditorState>
                     is EditorEvent.UpdateCanvasState -> updateCanvasState(event.canvasState)
                     is EditorEvent.UpdateJointAngle -> updateJointAngle(event.joint, event.newAngle)
                     is EditorEvent.MoveFigure -> moveFigure(event.figure, event.newX, event.newY)
+                    is EditorEvent.PlayAnimation -> playAnimation(screenSize)
                 }
             }
         }
 
-        return EditorState(frames, selectedFrameIndex, canvasState, figureModificationCount)
+        return EditorState(frames, selectedFrameIndex, canvasState, figureModificationCount, screenSize)
     }
 }

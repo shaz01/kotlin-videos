@@ -6,27 +6,10 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,11 +18,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.olcayaras.figures.compile
+import com.olcayaras.figures.getMockSegmentFrame
 import com.olcayaras.lib.definitions.SequencesAsVideo
 import com.olcayaras.lib.definitions.VideoDefinition
-import com.olcayaras.figures.getMockFigure
-import com.olcayaras.figures.getMockSegmentFrame
 import com.olcayaras.vidster.previewer.VideoController
 import com.olcayaras.vidster.previewer.previewers.VideoPlayer
 import com.olcayaras.vidster.previewer.rememberVideoController
@@ -270,7 +251,7 @@ private fun VideoScreenWithAnimationPreview() {
     var animation by remember { mutableStateOf<VideoDefinition?>(null) }
 
     LaunchedEffect(Unit) {
-        animation = buildAnimation(frames, screenSize, fps = 60)
+        animation = buildAnimation(frames, screenSize, fps = 3)
     }
 
     AppTheme {

@@ -77,8 +77,8 @@ fun EditorScreen(
                         .fillMaxWidth()
                         .padding(16.dp)
                 ) {
-                    FilledTonalIconButton(onClick = { /*TODO*/ }) {
-                        Icon(FeatherIcons.Play, contentDescription = null)
+                    FilledTonalIconButton(onClick = { take(EditorEvent.PlayAnimation) }) {
+                        Icon(FeatherIcons.Play, contentDescription = "Play Animation")
                     }
                     VerticalDivider(Modifier.height(24.dp), color = MaterialTheme.colorScheme.outlineVariant)
                     IconButton(onClick = { /*TODO*/ }) {
