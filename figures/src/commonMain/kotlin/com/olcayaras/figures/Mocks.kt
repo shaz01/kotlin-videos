@@ -40,7 +40,7 @@ fun getMockShapesDemo(x: Float = 300f, y: Float = 300f): Figure {
             }
 
             // Rectangle
-            children += Joint("line-filled-circle", length = 100f, angle = (30 * PI / 180).toFloat()).apply {
+            children += Joint("line-rect", length = 100f, angle = (30 * PI / 180).toFloat()).apply {
                 children += Joint("rect", length = 60f, angle = PI.toFloat(), type = SegmentType.Rectangle)
             }
 
