@@ -17,6 +17,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -256,6 +257,8 @@ private fun DrawScope.drawCompiledJoint(
     val start = Offset(compiled.startX, compiled.startY)
     val end = Offset(compiled.endX, compiled.endY)
 
+    val worldAngle = compiled.parentWorldAngle + compiled.joint.angle
+
     when (compiled.joint.type) {
         SegmentType.Line -> {
             drawLine(color = color, start = start, end = end, strokeWidth = thickness, cap = StrokeCap.Round)
@@ -267,6 +270,70 @@ private fun DrawScope.drawCompiledJoint(
                 center = Offset(compiled.centerX, compiled.centerY),
                 style = Stroke(width = thickness)
             )
+        }
+        SegmentType.FilledCircle -> {
+            drawCircle(
+                color = color,
+                radius = compiled.radius,
+                center = Offset(compiled.centerX, compiled.centerY)
+            )
+        }
+        SegmentType.Rectangle -> {
+            // Calculate perpendicular direction for rectangle height
+            val halfHeight = compiled.joint.length * 0.25f
+            val perpAngle = worldAngle + (Math.PI / 2).toFloat()
+            val perpX = halfHeight * kotlin.math.cos(perpAngle)
+            val perpY = halfHeight * kotlin.math.sin(perpAngle)
+
+            // Four corners of rectangle
+            val path = Path().apply {
+                moveTo(compiled.startX - perpX, compiled.startY - perpY)
+                lineTo(compiled.startX + perpX, compiled.startY + perpY)
+                lineTo(compiled.endX + perpX, compiled.endY + perpY)
+                lineTo(compiled.endX - perpX, compiled.endY - perpY)
+                close()
+            }
+            drawPath(path = path, color = color)
+        }
+        is SegmentType.Ellipse -> {
+            // Draw ellipse using path with calculated points
+            val majorRadius = compiled.joint.length / 2
+            val minorRadius = majorRadius * compiled.joint.type.widthRatio
+
+            // Use path to draw rotated ellipse (major axis along segment direction)
+            val path = Path()
+            val steps = 32
+            for (i in 0..steps) {
+                val t = (i.toFloat() / steps) * 2 * Math.PI.toFloat()
+                // Ellipse point in local coords (major axis along X, minor along Y)
+                val localX = majorRadius * kotlin.math.cos(t)
+                val localY = minorRadius * kotlin.math.sin(t)
+                // Rotate to world coords (X axis aligns with worldAngle)
+                val cos = kotlin.math.cos(worldAngle)
+                val sin = kotlin.math.sin(worldAngle)
+                val worldX = compiled.centerX + localX * cos - localY * sin
+                val worldY = compiled.centerY + localX * sin + localY * cos
+                if (i == 0) path.moveTo(worldX, worldY) else path.lineTo(worldX, worldY)
+            }
+            path.close()
+            drawPath(path = path, color = color, style = Stroke(width = thickness))
+        }
+        is SegmentType.Arc -> {
+            // Draw arc from start point, curving around center
+            val radius = compiled.joint.length / 2
+            val sweepAngle = compiled.joint.type.sweepAngle
+            // Arc starts from the direction pointing to start (opposite of worldAngle)
+            val arcStartAngle = worldAngle + Math.PI.toFloat()
+
+            val path = Path()
+            val steps = 24
+            for (i in 0..steps) {
+                val t = arcStartAngle + (i.toFloat() / steps) * sweepAngle
+                val x = compiled.centerX + radius * kotlin.math.cos(t)
+                val y = compiled.centerY + radius * kotlin.math.sin(t)
+                if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+            }
+            drawPath(path = path, color = color, style = Stroke(width = thickness))
         }
     }
 
@@ -293,7 +360,7 @@ private fun findHitJoint(
         ?.takeIf { distanceTo(canvasX, canvasY, it.endX, it.endY) <= hitRadius }
 }
 
-/** Finds the closest segment (line or circle) within hit distance, or null if none. */
+/** Finds the closest segment within hit distance, or null if none. */
 private fun findHitSegment(
     compiledJoints: List<CompiledJoint>,
     canvasX: Float,
@@ -310,8 +377,22 @@ private fun findHitSegment(
                 SegmentType.Line -> {
                     pointToSegmentDistance(canvasX, canvasY, compiled.startX, compiled.startY, compiled.endX, compiled.endY)
                 }
-                SegmentType.Circle -> {
+                SegmentType.Circle, is SegmentType.Arc -> {
+                    // Arc uses same hit test as circle (distance to the arc's circle edge)
                     pointToCircleDistance(canvasX, canvasY, compiled.centerX, compiled.centerY, compiled.radius)
+                }
+                SegmentType.FilledCircle -> {
+                    // For filled circle, hit if inside the circle
+                    val distToCenter = distanceTo(canvasX, canvasY, compiled.centerX, compiled.centerY)
+                    if (distToCenter <= compiled.radius) 0f else distToCenter - compiled.radius
+                }
+                SegmentType.Rectangle -> {
+                    // Simplified: use distance to center, scaled by aspect ratio
+                    pointToRectDistance(canvasX, canvasY, compiled)
+                }
+                is SegmentType.Ellipse -> {
+                    // Simplified: use distance to the ellipse edge (approximate)
+                    pointToEllipseDistance(canvasX, canvasY, compiled)
                 }
             }
         }
@@ -351,4 +432,56 @@ private fun pointToCircleDistance(
 ): Float {
     val distToCenter = distanceTo(px, py, centerX, centerY)
     return kotlin.math.abs(distToCenter - radius)
+}
+
+/** Distance from point to a rectangle (returns 0 if inside). */
+private fun pointToRectDistance(px: Float, py: Float, compiled: CompiledJoint): Float {
+    val worldAngle = compiled.parentWorldAngle + compiled.joint.angle
+    val width = compiled.joint.length
+    val height = compiled.joint.length * 0.5f
+
+    // Transform point to rectangle's local coordinate system
+    val dx = px - compiled.centerX
+    val dy = py - compiled.centerY
+    val cos = kotlin.math.cos(-worldAngle)
+    val sin = kotlin.math.sin(-worldAngle)
+    val localX = dx * cos - dy * sin
+    val localY = dx * sin + dy * cos
+
+    // Check if inside rectangle
+    val halfW = width / 2
+    val halfH = height / 2
+    if (kotlin.math.abs(localX) <= halfW && kotlin.math.abs(localY) <= halfH) {
+        return 0f
+    }
+
+    // Distance to nearest edge
+    val clampedX = localX.coerceIn(-halfW, halfW)
+    val clampedY = localY.coerceIn(-halfH, halfH)
+    return distanceTo(localX, localY, clampedX, clampedY)
+}
+
+/** Distance from point to ellipse edge (approximate). */
+private fun pointToEllipseDistance(px: Float, py: Float, compiled: CompiledJoint): Float {
+    val type = compiled.joint.type as SegmentType.Ellipse
+    val worldAngle = compiled.parentWorldAngle + compiled.joint.angle
+    val height = compiled.joint.length
+    val width = compiled.joint.length * type.widthRatio
+
+    // Transform point to ellipse's local coordinate system
+    val dx = px - compiled.centerX
+    val dy = py - compiled.centerY
+    val cos = kotlin.math.cos(-worldAngle)
+    val sin = kotlin.math.sin(-worldAngle)
+    val localX = dx * cos - dy * sin
+    val localY = dx * sin + dy * cos
+
+    // Normalized distance (1.0 = on ellipse edge)
+    val a = width / 2
+    val b = height / 2
+    val normalizedDist = sqrt((localX * localX) / (a * a) + (localY * localY) / (b * b))
+
+    // Approximate distance to edge
+    val avgRadius = (a + b) / 2
+    return kotlin.math.abs(normalizedDist - 1f) * avgRadius
 }

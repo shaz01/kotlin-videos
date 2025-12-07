@@ -11,6 +11,18 @@ sealed interface SegmentType {
 
     @Serializable
     data object Circle : SegmentType
+
+    @Serializable
+    data object FilledCircle : SegmentType
+
+    @Serializable
+    data object Rectangle : SegmentType
+
+    @Serializable
+    data class Ellipse(val widthRatio: Float = 0.5f) : SegmentType
+
+    @Serializable
+    data class Arc(val sweepAngle: Float = kotlin.math.PI.toFloat()) : SegmentType
 }
 
 @Serializable

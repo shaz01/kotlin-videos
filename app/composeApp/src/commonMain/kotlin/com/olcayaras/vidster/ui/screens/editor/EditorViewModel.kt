@@ -19,6 +19,7 @@ import com.olcayaras.figures.SegmentFrame
 import com.olcayaras.figures.Viewport
 import com.olcayaras.figures.deepCopy
 import com.olcayaras.figures.getMockFigure
+import com.olcayaras.figures.getMockShapesDemo
 import com.olcayaras.vidster.ui.Route
 import io.github.aakira.napier.Napier
 
@@ -69,7 +70,10 @@ class EditorViewModel(
     init {
         // Initialize with a single frame containing a mock figure
         val initialFrame = FigureFrame(
-            figures = listOf(getMockFigure(x = 400f, y = 300f)),
+            figures = listOf(
+                getMockFigure(x = 400f, y = 300f),
+                getMockShapesDemo(x = 700f, y = 300f)
+            ),
             viewport = Viewport()
         )
         _frames.value = listOf(initialFrame)
