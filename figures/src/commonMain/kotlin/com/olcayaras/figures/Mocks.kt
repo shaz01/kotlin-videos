@@ -30,13 +30,18 @@ fun getMockShapesDemo(x: Float = 300f, y: Float = 300f): Figure {
         y = y,
         root = Joint("origin", length = 0f, angle = 0f).apply {
             // Circle (stroke)
-            children += Joint("line-circle", length = 100f, angle = 30f).apply {
+            children += Joint("line-circle", length = 100f, angle = (30 * PI / 180).toFloat()).apply {
                 children += Joint("circle", length = 40f, angle = 0.toFloat(), type = SegmentType.Circle)
             }
 
             // Filled circle
-            children += Joint("line-filled-circle", length = 100f, angle = 30f).apply {
-                children += Joint("filledCircle", length = 30f, angle = (2 * PI / 3).toFloat(), type = SegmentType.FilledCircle)
+            children += Joint("line-filled-circle", length = 100f, angle = ((30 * PI / 180f).toFloat())).apply {
+                children += Joint(
+                    "filledCircle",
+                    length = 30f,
+                    angle = (2 * PI / 3).toFloat(),
+                    type = SegmentType.FilledCircle
+                )
             }
 
             // Rectangle
@@ -45,7 +50,7 @@ fun getMockShapesDemo(x: Float = 300f, y: Float = 300f): Figure {
             }
 
             // Ellipse
-            children += Joint("line-ellipse", length = 100f, angle = 30f).apply {
+            children += Joint("line-ellipse", length = 100f, angle = (30 * PI / 180).toFloat()).apply {
                 children += Joint(
                     "ellipse",
                     length = 50f,
@@ -54,7 +59,7 @@ fun getMockShapesDemo(x: Float = 300f, y: Float = 300f): Figure {
                 )
             }
             // Arc (half circle)
-            children += Joint("line-arc", length = 100f, angle = 30f).apply {
+            children += Joint("line-arc", length = 100f, angle = (30 * PI / 180).toFloat()).apply {
                 children += Joint(
                     "arc",
                     length = 40f,
