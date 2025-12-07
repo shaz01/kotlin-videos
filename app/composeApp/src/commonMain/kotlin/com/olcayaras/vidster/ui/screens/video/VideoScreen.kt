@@ -110,6 +110,7 @@ private fun VideoScreenLayout(
     Box(
         modifier = modifier
             .fillMaxSize()
+            .background(Color.Black)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,

@@ -8,7 +8,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -16,8 +15,6 @@ import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import kotlin.math.cos
-import kotlin.math.sin
 
 private fun DrawScope.withScreenSize(
     screenSize: IntSize?,
@@ -157,11 +154,12 @@ fun SegmentFrameCanvas(
     }
 
     Canvas(modifier = finalModifier) {
-        val centerX = size.width / 2
-        val centerY = size.height / 2
+        // Use logical screen size for pivot point, or fall back to physical canvas size
+        val logicalCenterX = (screenSize?.width?.toFloat() ?: size.width) / 2
+        val logicalCenterY = (screenSize?.height?.toFloat() ?: size.height) / 2
 
         withScreenSize(screenSize) {
-            withViewport(frame.viewport, pivotX = centerX, pivotY = centerY) {
+            withViewport(frame.viewport, pivotX = logicalCenterX, pivotY = logicalCenterY) {
                 frame.segments.forEach { segment ->
                     drawSegment(segment, Color.Black, 4f)
                 }

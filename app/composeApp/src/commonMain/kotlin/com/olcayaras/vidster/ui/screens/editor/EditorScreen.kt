@@ -31,9 +31,12 @@ fun EditorScreen(
             modifier = Modifier.fillMaxSize(),
             figures = model.selectedFigures,
             canvasState = model.canvasState,
+            viewport = model.selectedFrame.viewport,
+            screenSize = model.screenSize,
             figureModificationCount = model.figureModificationCount,
             rotationAllowed = true,
             onCanvasStateChange = { take(EditorEvent.UpdateCanvasState(it)) },
+            onViewportChanged = { take(EditorEvent.UpdateViewport(it)) },
             onJointAngleChanged = { figure, joint, angle ->
                 take(EditorEvent.UpdateJointAngle(figure, joint, angle))
             },

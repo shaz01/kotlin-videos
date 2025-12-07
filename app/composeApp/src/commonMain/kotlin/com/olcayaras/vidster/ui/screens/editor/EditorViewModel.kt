@@ -32,6 +32,9 @@ sealed interface EditorEvent {
     // Canvas operations
     data class UpdateCanvasState(val canvasState: CanvasState) : EditorEvent
 
+    // Viewport operations
+    data class UpdateViewport(val viewport: Viewport) : EditorEvent
+
     // Figure editing
     data class UpdateJointAngle(val figure: Figure, val joint: Joint, val newAngle: Float) : EditorEvent
     data class MoveFigure(val figure: Figure, val newX: Float, val newY: Float) : EditorEvent
@@ -47,12 +50,15 @@ data class EditorState(
     val figureModificationCount: Long = 0L,
     val screenSize: IntSize = IntSize(1920, 1080)
 ) {
-    val selectedFrame: FigureFrame? get() = frames.getOrNull(selectedFrameIndex)
+    val selectedFrame: FigureFrame get() {
+        val frame = frames.getOrNull(selectedFrameIndex) ?: frames.lastOrNull() ?: throw IllegalStateException("No frames: ${frames.size}, selected index: $selectedFrameIndex, $frames")
+        return frame
+    }
 
-    val selectedFigures: List<Figure> get() = selectedFrame?.figures ?: emptyList()
+    val selectedFigures: List<Figure> get() = selectedFrame.figures
 
     // Compile selected frame for timeline preview
-    val selectedSegmentFrame: SegmentFrame? = selectedFrame?.compile()
+    val selectedSegmentFrame: SegmentFrame = selectedFrame.compile()
 
     // Compile all frames for timeline thumbnails
     val segmentFrames: List<SegmentFrame> = frames.map { it.compile() }
@@ -135,6 +141,17 @@ class EditorViewModel(
         _figureModificationCount.value++
     }
 
+    private fun updateViewport(viewport: Viewport) {
+        // Update the selected frame's viewport
+        val frameIndex = _selectedFrameIndex.value
+        val currentFrames = _frames.value.toMutableList()
+        if (frameIndex in currentFrames.indices) {
+            val frame = currentFrames[frameIndex]
+            currentFrames[frameIndex] = frame.copy(viewport = viewport)
+            _frames.value = currentFrames
+        }
+    }
+
     private fun playAnimation(screenSize: IntSize) {
         val segmentFrames = _frames.value.map { it.compile() }
         navigation.bringToFront(
@@ -161,6 +178,7 @@ class EditorViewModel(
                     is EditorEvent.AddFrame -> addFrame()
                     is EditorEvent.RemoveFrame -> removeFrame(event.index)
                     is EditorEvent.UpdateCanvasState -> updateCanvasState(event.canvasState)
+                    is EditorEvent.UpdateViewport -> updateViewport(event.viewport)
                     is EditorEvent.UpdateJointAngle -> updateJointAngle(event.joint, event.newAngle)
                     is EditorEvent.MoveFigure -> moveFigure(event.figure, event.newX, event.newY)
                     is EditorEvent.PlayAnimation -> playAnimation(screenSize)
