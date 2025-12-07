@@ -96,6 +96,22 @@ data class Segment(
     val type: SegmentType = SegmentType.Line
 )
 
+// Extension properties for circle segment calculations
+val Segment.endX: Float
+    get() = startX + length * cos(angle)
+
+val Segment.endY: Float
+    get() = startY + length * sin(angle)
+
+val Segment.centerX: Float
+    get() = (startX + endX) / 2
+
+val Segment.centerY: Float
+    get() = (startY + endY) / 2
+
+val Segment.radius: Float
+    get() = length / 2
+
 // Think like compiled FigureFrame
 @Serializable
 data class SegmentFrame(
@@ -153,6 +169,16 @@ data class CompiledJoint(
     val endY: Float,
     val parentWorldAngle: Float
 )
+
+// Extension properties for circle segment calculations
+val CompiledJoint.centerX: Float
+    get() = (startX + endX) / 2
+
+val CompiledJoint.centerY: Float
+    get() = (startY + endY) / 2
+
+val CompiledJoint.radius: Float
+    get() = joint.length / 2
 
 /**
  * Compiles a figure into a list of [CompiledJoint]s with world positions.

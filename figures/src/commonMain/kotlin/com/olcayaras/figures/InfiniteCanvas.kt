@@ -261,13 +261,10 @@ private fun DrawScope.drawCompiledJoint(
             drawLine(color = color, start = start, end = end, strokeWidth = thickness, cap = StrokeCap.Round)
         }
         SegmentType.Circle -> {
-            val centerX = (compiled.startX + compiled.endX) / 2
-            val centerY = (compiled.startY + compiled.endY) / 2
-            val radius = compiled.joint.length / 2
             drawCircle(
                 color = color,
-                radius = radius,
-                center = Offset(centerX, centerY),
+                radius = compiled.radius,
+                center = Offset(compiled.centerX, compiled.centerY),
                 style = Stroke(width = thickness)
             )
         }
@@ -314,10 +311,7 @@ private fun findHitSegment(
                     pointToSegmentDistance(canvasX, canvasY, compiled.startX, compiled.startY, compiled.endX, compiled.endY)
                 }
                 SegmentType.Circle -> {
-                    val centerX = (compiled.startX + compiled.endX) / 2
-                    val centerY = (compiled.startY + compiled.endY) / 2
-                    val radius = compiled.joint.length / 2
-                    pointToCircleDistance(canvasX, canvasY, centerX, centerY, radius)
+                    pointToCircleDistance(canvasX, canvasY, compiled.centerX, compiled.centerY, compiled.radius)
                 }
             }
         }
