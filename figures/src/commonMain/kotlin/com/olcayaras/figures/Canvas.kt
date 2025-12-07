@@ -10,6 +10,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -68,13 +69,28 @@ private fun DrawScope.drawSegment(
     val start = Offset(segment.startX, segment.startY)
     val end = Offset(endX, endY)
 
-    drawLine(
-        color = color,
-        start = start,
-        end = end,
-        strokeWidth = thickness,
-        cap = StrokeCap.Round
-    )
+    when (segment.type) {
+        SegmentType.Line -> {
+            drawLine(
+                color = color,
+                start = start,
+                end = end,
+                strokeWidth = thickness,
+                cap = StrokeCap.Round
+            )
+        }
+        SegmentType.Circle -> {
+            val centerX = (segment.startX + endX) / 2
+            val centerY = (segment.startY + endY) / 2
+            val radius = segment.length / 2
+            drawCircle(
+                color = color,
+                radius = radius,
+                center = Offset(centerX, centerY),
+                style = Stroke(width = thickness)
+            )
+        }
+    }
 
     // Joint circle at start
     drawCircle(

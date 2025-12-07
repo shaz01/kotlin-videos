@@ -5,10 +5,20 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 @Serializable
+sealed interface SegmentType {
+    @Serializable
+    data object Line : SegmentType
+
+    @Serializable
+    data object Circle : SegmentType
+}
+
+@Serializable
 data class Joint(
     val id: String,
     val length: Float, // distance from parent
     var angle: Float, // relative to parent (radians)
+    val type: SegmentType = SegmentType.Line,
     val children: MutableList<Joint> = mutableListOf()
 )
 
@@ -45,6 +55,7 @@ fun Joint.deepCopy(): Joint {
         id = id,
         length = length,
         angle = angle,
+        type = type,
         children = children.mapTo(mutableListOf()) { it.deepCopy() }
     )
 }
@@ -82,6 +93,7 @@ data class Segment(
     val angle: Float, // radians
     val startX: Float,
     val startY: Float,
+    val type: SegmentType = SegmentType.Line
 )
 
 // Think like compiled FigureFrame
@@ -105,7 +117,7 @@ fun compileJoints(
     val result = root.children.flatMap { child ->
         compileJoints(root = child, startX + dx, startY + dy, worldAngle)
     }
-    return result + Segment(root.length, worldAngle, startX, startY)
+    return result + Segment(root.length, worldAngle, startX, startY, root.type)
 }
 
 fun Joint.compile() = compileJoints(root = this, startX = 0f, startY = 0f)
