@@ -64,10 +64,8 @@ private fun DrawScope.drawSegment(
 ) {
     if (segment.length <= 0f) return
 
-    val endX = segment.startX + segment.length * cos(segment.angle)
-    val endY = segment.startY + segment.length * sin(segment.angle)
     val start = Offset(segment.startX, segment.startY)
-    val end = Offset(endX, endY)
+    val end = Offset(segment.endX, segment.endY)
 
     when (segment.type) {
         SegmentType.Line -> {
@@ -80,13 +78,10 @@ private fun DrawScope.drawSegment(
             )
         }
         SegmentType.Circle -> {
-            val centerX = (segment.startX + endX) / 2
-            val centerY = (segment.startY + endY) / 2
-            val radius = segment.length / 2
             drawCircle(
                 color = color,
-                radius = radius,
-                center = Offset(centerX, centerY),
+                radius = segment.radius,
+                center = Offset(segment.centerX, segment.centerY),
                 style = Stroke(width = thickness)
             )
         }
