@@ -212,18 +212,10 @@ private fun DrawScope.drawViewportRect(rect: Rect) {
     // Draw corner handles for visual feedback
     val handleSize = 12f
     val handleColor = Color.Blue.copy(alpha = 0.8f)
-    listOf(
-        Offset(rect.left, rect.top),
-        Offset(rect.right, rect.top),
-        Offset(rect.left, rect.bottom),
-        Offset(rect.right, rect.bottom)
-    ).forEach { corner ->
-        drawCircle(
-            color = handleColor,
-            radius = handleSize,
-            center = corner
-        )
-    }
+    drawCircle(color = handleColor, radius = handleSize, center = Offset(rect.left, rect.top))
+    drawCircle(color = handleColor, radius = handleSize, center = Offset(rect.right, rect.top))
+    drawCircle(color = handleColor, radius = handleSize, center = Offset(rect.left, rect.bottom))
+    drawCircle(color = handleColor, radius = handleSize, center = Offset(rect.right, rect.bottom))
 }
 
 // =============================================================================
