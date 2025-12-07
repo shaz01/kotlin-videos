@@ -64,10 +64,8 @@ private fun DrawScope.drawSegment(
 ) {
     if (segment.length <= 0f) return
 
-    val endX = segment.startX + segment.length * cos(segment.angle)
-    val endY = segment.startY + segment.length * sin(segment.angle)
     val start = Offset(segment.startX, segment.startY)
-    val end = Offset(endX, endY)
+    val end = Offset(segment.endX, segment.endY)
 
     when (segment.type) {
         SegmentType.Line -> {
