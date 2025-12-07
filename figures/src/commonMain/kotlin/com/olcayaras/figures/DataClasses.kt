@@ -5,10 +5,20 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 @Serializable
+sealed interface SegmentType {
+    @Serializable
+    data object Line : SegmentType
+
+    @Serializable
+    data object Circle : SegmentType
+}
+
+@Serializable
 data class Joint(
     val id: String,
     val length: Float, // distance from parent
     var angle: Float, // relative to parent (radians)
+    val type: SegmentType = SegmentType.Line,
     val children: MutableList<Joint> = mutableListOf()
 )
 
@@ -45,6 +55,7 @@ fun Joint.deepCopy(): Joint {
         id = id,
         length = length,
         angle = angle,
+        type = type,
         children = children.mapTo(mutableListOf()) { it.deepCopy() }
     )
 }
@@ -82,7 +93,24 @@ data class Segment(
     val angle: Float, // radians
     val startX: Float,
     val startY: Float,
+    val type: SegmentType = SegmentType.Line
 )
+
+// Extension properties for circle segment calculations
+val Segment.endX: Float
+    get() = startX + length * cos(angle)
+
+val Segment.endY: Float
+    get() = startY + length * sin(angle)
+
+val Segment.centerX: Float
+    get() = (startX + endX) / 2
+
+val Segment.centerY: Float
+    get() = (startY + endY) / 2
+
+val Segment.radius: Float
+    get() = length / 2
 
 // Think like compiled FigureFrame
 @Serializable
@@ -105,7 +133,7 @@ fun compileJoints(
     val result = root.children.flatMap { child ->
         compileJoints(root = child, startX + dx, startY + dy, worldAngle)
     }
-    return result + Segment(root.length, worldAngle, startX, startY)
+    return result + Segment(root.length, worldAngle, startX, startY, root.type)
 }
 
 fun Joint.compile() = compileJoints(root = this, startX = 0f, startY = 0f)
@@ -141,6 +169,16 @@ data class CompiledJoint(
     val endY: Float,
     val parentWorldAngle: Float
 )
+
+// Extension properties for circle segment calculations
+val CompiledJoint.centerX: Float
+    get() = (startX + endX) / 2
+
+val CompiledJoint.centerY: Float
+    get() = (startY + endY) / 2
+
+val CompiledJoint.radius: Float
+    get() = joint.length / 2
 
 /**
  * Compiles a figure into a list of [CompiledJoint]s with world positions.

@@ -10,7 +10,7 @@ fun getMockFigure(name: String = "humanoid", x: Float = 300f, y: Float = 200f): 
         y = y,
         root = Joint("hip", length = 0f, angle = 0f).apply {
             children += Joint("torso", length = 50f, angle = (-PI / 2).toFloat()).apply {
-//                        children += Joint("head", length = 30f, angle = 0f)
+                children += Joint("head", length = 30f, angle = 0f, type = SegmentType.Circle)
                 children += Joint("leftArm", length = 40f, angle = (PI / 3).toFloat())
                 children += Joint("rightArm", length = 40f, angle = (-4 * PI / 3).toFloat())
             }

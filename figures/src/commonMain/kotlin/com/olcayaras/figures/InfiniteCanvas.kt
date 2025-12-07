@@ -19,6 +19,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.input.pointer.PointerEvent
 import androidx.compose.ui.input.pointer.PointerEventType
@@ -244,7 +245,7 @@ private fun handleSingleTouch(
 // Drawing
 // =============================================================================
 
-/** Draws a joint as a line segment with a circle at the start (connection point). */
+/** Draws a joint as a line segment or circle with a joint dot at the start. */
 private fun DrawScope.drawCompiledJoint(
     compiled: CompiledJoint,
     color: Color,
@@ -255,7 +256,21 @@ private fun DrawScope.drawCompiledJoint(
     val start = Offset(compiled.startX, compiled.startY)
     val end = Offset(compiled.endX, compiled.endY)
 
-    drawLine(color = color, start = start, end = end, strokeWidth = thickness, cap = StrokeCap.Round)
+    when (compiled.joint.type) {
+        SegmentType.Line -> {
+            drawLine(color = color, start = start, end = end, strokeWidth = thickness, cap = StrokeCap.Round)
+        }
+        SegmentType.Circle -> {
+            drawCircle(
+                color = color,
+                radius = compiled.radius,
+                center = Offset(compiled.centerX, compiled.centerY),
+                style = Stroke(width = thickness)
+            )
+        }
+    }
+
+    // Joint dot at start
     drawCircle(color = color, radius = thickness, center = start)
 }
 
@@ -278,7 +293,7 @@ private fun findHitJoint(
         ?.takeIf { distanceTo(canvasX, canvasY, it.endX, it.endY) <= hitRadius }
 }
 
-/** Finds the closest segment (line) within hit distance, or null if none. */
+/** Finds the closest segment (line or circle) within hit distance, or null if none. */
 private fun findHitSegment(
     compiledJoints: List<CompiledJoint>,
     canvasX: Float,
@@ -290,8 +305,15 @@ private fun findHitSegment(
     return compiledJoints
         .asSequence()
         .filter { it.joint.length > 0f }
-        .associateWith {
-            pointToSegmentDistance(canvasX, canvasY, it.startX, it.startY, it.endX, it.endY)
+        .associateWith { compiled ->
+            when (compiled.joint.type) {
+                SegmentType.Line -> {
+                    pointToSegmentDistance(canvasX, canvasY, compiled.startX, compiled.startY, compiled.endX, compiled.endY)
+                }
+                SegmentType.Circle -> {
+                    pointToCircleDistance(canvasX, canvasY, compiled.centerX, compiled.centerY, compiled.radius)
+                }
+            }
         }
         .minByOrNull { it.value }
         ?.takeIf { it.value <= hitDistance }
@@ -319,4 +341,14 @@ private fun pointToSegmentDistance(
 
     val t = (((px - x1) * dx + (py - y1) * dy) / lengthSquared).coerceIn(0f, 1f)
     return distanceTo(px, py, x1 + t * dx, y1 + t * dy)
+}
+
+/** Distance from point (px, py) to the edge of a circle. */
+private fun pointToCircleDistance(
+    px: Float, py: Float,
+    centerX: Float, centerY: Float,
+    radius: Float
+): Float {
+    val distToCenter = distanceTo(px, py, centerX, centerY)
+    return kotlin.math.abs(distToCenter - radius)
 }
