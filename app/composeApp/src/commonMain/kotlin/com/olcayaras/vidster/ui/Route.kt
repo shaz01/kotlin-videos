@@ -1,16 +1,25 @@
+@file:OptIn(com.arkivanov.decompose.DelicateDecomposeApi::class)
+
 package com.olcayaras.vidster.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.unit.IntSize
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.StackNavigation
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.Serializable
+import com.arkivanov.decompose.router.stack.pop
+import com.olcayaras.figures.SegmentFrame
 import com.olcayaras.vidster.ViewModel
+import com.olcayaras.vidster.previewer.rememberVideoController
 import com.olcayaras.vidster.ui.navigation.NavigationFactory
 import com.olcayaras.vidster.ui.screens.editor.EditorScreen
 import com.olcayaras.vidster.ui.screens.editor.EditorViewModel
+import com.olcayaras.vidster.ui.screens.video.VideoEvent
+import com.olcayaras.vidster.ui.screens.video.VideoScreen
+import com.olcayaras.vidster.ui.screens.video.VideoViewModel
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
 
 /**
  * Base routes for the app.
@@ -20,6 +29,12 @@ sealed class Route {
     @Serializable
     data object Editor : Route()
 
+    @Serializable
+    data class Video(
+        val videoFrames: List<SegmentFrame>,
+        val videoScreenWidth: Int,
+        val videoScreenHeight: Int
+    ) : Route()
 
     companion object : NavigationFactory<Route> {
         override val initialRoute: Route = Editor
@@ -31,7 +46,14 @@ sealed class Route {
             navigation: StackNavigation<Route>,
         ): ViewModel<*, *> {
             return when (route) {
-                is Editor -> EditorViewModel(componentContext)
+                is Editor -> EditorViewModel(c = componentContext, navigation = navigation)
+
+                is Video -> VideoViewModel(
+                    c = componentContext,
+                    frames = route.videoFrames,
+                    screenSize = IntSize(route.videoScreenWidth, route.videoScreenHeight),
+                    onExit = { navigation.pop() }
+                )
             }
         }
 
@@ -41,6 +63,19 @@ sealed class Route {
                 is EditorViewModel -> {
                     val state by viewModel.models.collectAsState()
                     EditorScreen(state, viewModel::take)
+                }
+
+                is VideoViewModel -> {
+                    val state by viewModel.models.collectAsState()
+                    state.animation?.let { animation ->
+                        val controller = rememberVideoController(animation.duration, fps = 60)
+                        VideoScreen(
+                            animation = animation,
+                            videoResolution = state.screenSize,
+                            videoController = controller,
+                            onExit = { viewModel.take(VideoEvent.Exit) }
+                        )
+                    }
                 }
 
                 else -> throw IllegalStateException("Instance is $viewModel but that class is not known")
