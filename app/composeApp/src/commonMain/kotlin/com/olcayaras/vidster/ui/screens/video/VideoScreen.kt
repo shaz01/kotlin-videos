@@ -244,7 +244,7 @@ private fun VideoScreenPreview() {
 private fun VideoScreenWithAnimationPreview() {
     val screenSize = IntSize(1920, 1080)
     val frames = remember {
-        // Generate 60 frames of animation (1 second at 60fps)
+        // Generate 60 frames of animation (20 seconds at 3fps)
         (0 until 60).map { getMockSegmentFrame() }
     }
 
