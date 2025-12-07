@@ -6,6 +6,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.unit.IntSize
 import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.decompose.router.stack.StackNavigation
+import com.arkivanov.decompose.router.stack.bringToFront
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import com.olcayaras.vidster.ViewModel
@@ -17,6 +19,7 @@ import com.olcayaras.figures.SegmentFrame
 import com.olcayaras.figures.Viewport
 import com.olcayaras.figures.deepCopy
 import com.olcayaras.figures.getMockFigure
+import com.olcayaras.vidster.ui.Route
 import io.github.aakira.napier.Napier
 
 sealed interface EditorEvent {
@@ -56,7 +59,7 @@ data class EditorState(
 
 class EditorViewModel(
     c: ComponentContext,
-    private val onPlayAnimation: (frames: List<SegmentFrame>, screenSize: IntSize) -> Unit = { _, _ -> }
+    private val navigation: StackNavigation<Route>,
 ) : ViewModel<EditorEvent, EditorState>(c) {
     private val _frames = MutableStateFlow<List<FigureFrame>>(emptyList())
     private val _selectedFrameIndex = MutableStateFlow(0)
@@ -130,7 +133,13 @@ class EditorViewModel(
 
     private fun playAnimation(screenSize: IntSize) {
         val segmentFrames = _frames.value.map { it.compile() }
-        onPlayAnimation(segmentFrames, screenSize)
+        navigation.bringToFront(
+            Route.Video(
+                segmentFrames,
+                videoScreenWidth = screenSize.width,
+                videoScreenHeight = screenSize.height
+            )
+        )
     }
 
     @Composable

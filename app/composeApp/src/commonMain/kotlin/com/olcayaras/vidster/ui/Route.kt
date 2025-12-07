@@ -9,9 +9,6 @@ import androidx.compose.ui.unit.IntSize
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.pop
-import com.arkivanov.decompose.router.stack.push
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.Serializable
 import com.olcayaras.figures.SegmentFrame
 import com.olcayaras.vidster.ViewModel
 import com.olcayaras.vidster.previewer.rememberVideoController
@@ -21,6 +18,8 @@ import com.olcayaras.vidster.ui.screens.editor.EditorViewModel
 import com.olcayaras.vidster.ui.screens.video.VideoEvent
 import com.olcayaras.vidster.ui.screens.video.VideoScreen
 import com.olcayaras.vidster.ui.screens.video.VideoViewModel
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
 
 /**
  * Base routes for the app.
@@ -31,25 +30,15 @@ sealed class Route {
     data object Editor : Route()
 
     @Serializable
-    data object Video : Route()
+    data class Video(
+        val videoFrames: List<SegmentFrame>,
+        val videoScreenWidth: Int,
+        val videoScreenHeight: Int
+    ) : Route()
 
     companion object : NavigationFactory<Route> {
-        // Shared state for passing frames between screens (not serialized in route)
-        private var pendingVideoFrames: List<SegmentFrame> = emptyList()
-        private var pendingVideoScreenSize: IntSize = IntSize(1920, 1080)
-
         override val initialRoute: Route = Editor
         override val kSerializer: KSerializer<Route> get() = serializer()
-
-        fun navigateToVideo(
-            navigation: StackNavigation<Route>,
-            frames: List<SegmentFrame>,
-            screenSize: IntSize
-        ) {
-            pendingVideoFrames = frames
-            pendingVideoScreenSize = screenSize
-            navigation.push(Video)
-        }
 
         override fun createChild(
             route: Route,
@@ -57,16 +46,12 @@ sealed class Route {
             navigation: StackNavigation<Route>,
         ): ViewModel<*, *> {
             return when (route) {
-                is Editor -> EditorViewModel(
-                    c = componentContext,
-                    onPlayAnimation = { frames, screenSize ->
-                        navigateToVideo(navigation, frames, screenSize)
-                    }
-                )
+                is Editor -> EditorViewModel(c = componentContext, navigation = navigation)
+
                 is Video -> VideoViewModel(
                     c = componentContext,
-                    frames = pendingVideoFrames,
-                    screenSize = pendingVideoScreenSize,
+                    frames = route.videoFrames,
+                    screenSize = IntSize(route.videoScreenWidth, route.videoScreenHeight),
                     onExit = { navigation.pop() }
                 )
             }

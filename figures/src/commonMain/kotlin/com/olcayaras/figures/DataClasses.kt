@@ -1,8 +1,10 @@
 package com.olcayaras.figures
 
+import kotlinx.serialization.Serializable
 import kotlin.math.cos
 import kotlin.math.sin
 
+@Serializable
 data class Joint(
     val id: String,
     val length: Float, // distance from parent
@@ -10,6 +12,7 @@ data class Joint(
     val children: MutableList<Joint> = mutableListOf()
 )
 
+@Serializable
 data class Figure(
     val name: String,
     val root: Joint,
@@ -17,6 +20,7 @@ data class Figure(
     var y: Float
 )
 
+@Serializable
 data class FigureFrame(
     val figures: List<Figure>,
     val viewport: Viewport,
@@ -72,6 +76,7 @@ fun FigureFrame.deepCopy(): FigureFrame {
 // --------------------------------------------------------------------------------------------
 
 // Think like compiled joint/figure
+@Serializable
 data class Segment(
     val length: Float,
     val angle: Float, // radians
@@ -80,6 +85,7 @@ data class Segment(
 )
 
 // Think like compiled FigureFrame
+@Serializable
 data class SegmentFrame(
     val segments: List<Segment>,
     val viewport: Viewport,
@@ -125,6 +131,7 @@ fun Figure.compile() = compileFigure(this)
  * @param endY World Y position of joint tip
  * @param parentWorldAngle Accumulated angle from root to parent (for angle calculation)
  */
+@Serializable
 data class CompiledJoint(
     val joint: Joint,
     val figure: Figure,
@@ -172,6 +179,7 @@ fun Figure.compileForEditing(): List<CompiledJoint> =
 
 // --------------------------------------------------------------------------------------------
 
+@Serializable
 data class Viewport(
     val offsetX: Float = 0f,
     val offsetY: Float = 0f,
@@ -186,7 +194,11 @@ data class Viewport(
     )
 }
 
+@Serializable
 sealed interface ViewportTransition {
-    object None : ViewportTransition
-    object Lerp : ViewportTransition
+    @Serializable
+    data object None : ViewportTransition
+
+    @Serializable
+    data object Lerp : ViewportTransition
 }
