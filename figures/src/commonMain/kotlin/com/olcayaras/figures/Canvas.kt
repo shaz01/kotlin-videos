@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -83,6 +84,47 @@ private fun DrawScope.drawSegment(
                 radius = segment.radius,
                 center = Offset(segment.centerX, segment.centerY),
                 style = Stroke(width = thickness)
+            )
+        }
+        SegmentType.FilledCircle -> {
+            drawFilledCircleShape(
+                color = color,
+                radius = segment.radius,
+                centerX = segment.centerX,
+                centerY = segment.centerY
+            )
+        }
+        SegmentType.Rectangle -> {
+            drawRectangleShape(
+                color = color,
+                length = segment.length,
+                angle = segment.angle,
+                startX = segment.startX,
+                startY = segment.startY,
+                endX = segment.endX,
+                endY = segment.endY
+            )
+        }
+        is SegmentType.Ellipse -> {
+            drawEllipseShape(
+                color = color,
+                thickness = thickness,
+                length = segment.length,
+                widthRatio = segment.type.widthRatio,
+                angle = segment.angle,
+                centerX = segment.centerX,
+                centerY = segment.centerY
+            )
+        }
+        is SegmentType.Arc -> {
+            drawArcShape(
+                color = color,
+                thickness = thickness,
+                length = segment.length,
+                sweepAngle = segment.type.sweepAngle,
+                angle = segment.angle,
+                centerX = segment.centerX,
+                centerY = segment.centerY
             )
         }
     }
