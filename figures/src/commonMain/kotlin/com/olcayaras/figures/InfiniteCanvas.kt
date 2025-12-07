@@ -434,19 +434,30 @@ private fun pointToCircleDistance(
     return kotlin.math.abs(distToCenter - radius)
 }
 
-/** Distance from point to a rectangle (returns 0 if inside). */
-private fun pointToRectDistance(px: Float, py: Float, compiled: CompiledJoint): Float {
-    val worldAngle = compiled.parentWorldAngle + compiled.joint.angle
-    val width = compiled.joint.length
-    val height = compiled.joint.length * 0.5f
+/** Transform point to local coordinate system of a shape. */
+private data class LocalPoint(val x: Float, val y: Float)
 
-    // Transform point to rectangle's local coordinate system
+private fun transformToLocalCoordinates(
+    px: Float, py: Float,
+    compiled: CompiledJoint
+): LocalPoint {
+    val worldAngle = compiled.parentWorldAngle + compiled.joint.angle
     val dx = px - compiled.centerX
     val dy = py - compiled.centerY
     val cos = kotlin.math.cos(-worldAngle)
     val sin = kotlin.math.sin(-worldAngle)
     val localX = dx * cos - dy * sin
     val localY = dx * sin + dy * cos
+    return LocalPoint(localX, localY)
+}
+
+/** Distance from point to a rectangle (returns 0 if inside). */
+private fun pointToRectDistance(px: Float, py: Float, compiled: CompiledJoint): Float {
+    val width = compiled.joint.length
+    val height = compiled.joint.length * 0.5f
+
+    // Transform point to rectangle's local coordinate system
+    val (localX, localY) = transformToLocalCoordinates(px, py, compiled)
 
     // Check if inside rectangle
     val halfW = width / 2
@@ -464,17 +475,11 @@ private fun pointToRectDistance(px: Float, py: Float, compiled: CompiledJoint): 
 /** Distance from point to ellipse edge (approximate). */
 private fun pointToEllipseDistance(px: Float, py: Float, compiled: CompiledJoint): Float {
     val type = compiled.joint.type as SegmentType.Ellipse
-    val worldAngle = compiled.parentWorldAngle + compiled.joint.angle
     val height = compiled.joint.length
     val width = compiled.joint.length * type.widthRatio
 
     // Transform point to ellipse's local coordinate system
-    val dx = px - compiled.centerX
-    val dy = py - compiled.centerY
-    val cos = kotlin.math.cos(-worldAngle)
-    val sin = kotlin.math.sin(-worldAngle)
-    val localX = dx * cos - dy * sin
-    val localY = dx * sin + dy * cos
+    val (localX, localY) = transformToLocalCoordinates(px, py, compiled)
 
     // Normalized distance (1.0 = on ellipse edge)
     val a = width / 2
