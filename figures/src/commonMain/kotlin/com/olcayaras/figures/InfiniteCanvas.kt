@@ -272,68 +272,45 @@ private fun DrawScope.drawCompiledJoint(
             )
         }
         SegmentType.FilledCircle -> {
-            drawCircle(
+            drawFilledCircleShape(
                 color = color,
                 radius = compiled.radius,
-                center = Offset(compiled.centerX, compiled.centerY)
+                centerX = compiled.centerX,
+                centerY = compiled.centerY
             )
         }
         SegmentType.Rectangle -> {
-            // Calculate perpendicular direction for rectangle height
-            val halfHeight = compiled.joint.length * 0.25f
-            val perpAngle = worldAngle + (Math.PI / 2).toFloat()
-            val perpX = halfHeight * kotlin.math.cos(perpAngle)
-            val perpY = halfHeight * kotlin.math.sin(perpAngle)
-
-            // Four corners of rectangle
-            val path = Path().apply {
-                moveTo(compiled.startX - perpX, compiled.startY - perpY)
-                lineTo(compiled.startX + perpX, compiled.startY + perpY)
-                lineTo(compiled.endX + perpX, compiled.endY + perpY)
-                lineTo(compiled.endX - perpX, compiled.endY - perpY)
-                close()
-            }
-            drawPath(path = path, color = color)
+            drawRectangleShape(
+                color = color,
+                length = compiled.joint.length,
+                angle = worldAngle,
+                startX = compiled.startX,
+                startY = compiled.startY,
+                endX = compiled.endX,
+                endY = compiled.endY
+            )
         }
         is SegmentType.Ellipse -> {
-            // Draw ellipse using path with calculated points
-            val majorRadius = compiled.joint.length / 2
-            val minorRadius = majorRadius * compiled.joint.type.widthRatio
-
-            // Use path to draw rotated ellipse (major axis along segment direction)
-            val path = Path()
-            val steps = 32
-            for (i in 0..steps) {
-                val t = (i.toFloat() / steps) * 2 * Math.PI.toFloat()
-                // Ellipse point in local coords (major axis along X, minor along Y)
-                val localX = majorRadius * kotlin.math.cos(t)
-                val localY = minorRadius * kotlin.math.sin(t)
-                // Rotate to world coords (X axis aligns with worldAngle)
-                val cos = kotlin.math.cos(worldAngle)
-                val sin = kotlin.math.sin(worldAngle)
-                val worldX = compiled.centerX + localX * cos - localY * sin
-                val worldY = compiled.centerY + localX * sin + localY * cos
-                if (i == 0) path.moveTo(worldX, worldY) else path.lineTo(worldX, worldY)
-            }
-            path.close()
-            drawPath(path = path, color = color, style = Stroke(width = thickness))
+            drawEllipseShape(
+                color = color,
+                thickness = thickness,
+                length = compiled.joint.length,
+                widthRatio = compiled.joint.type.widthRatio,
+                angle = worldAngle,
+                centerX = compiled.centerX,
+                centerY = compiled.centerY
+            )
         }
         is SegmentType.Arc -> {
-            // Draw arc from start point, curving around center
-            val radius = compiled.joint.length / 2
-            val sweepAngle = compiled.joint.type.sweepAngle
-            // Arc starts from the direction pointing to start (opposite of worldAngle)
-            val arcStartAngle = worldAngle + Math.PI.toFloat()
-
-            val path = Path()
-            val steps = 24
-            for (i in 0..steps) {
-                val t = arcStartAngle + (i.toFloat() / steps) * sweepAngle
-                val x = compiled.centerX + radius * kotlin.math.cos(t)
-                val y = compiled.centerY + radius * kotlin.math.sin(t)
-                if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
-            }
-            drawPath(path = path, color = color, style = Stroke(width = thickness))
+            drawArcShape(
+                color = color,
+                thickness = thickness,
+                length = compiled.joint.length,
+                sweepAngle = compiled.joint.type.sweepAngle,
+                angle = worldAngle,
+                centerX = compiled.centerX,
+                centerY = compiled.centerY
+            )
         }
     }
 
