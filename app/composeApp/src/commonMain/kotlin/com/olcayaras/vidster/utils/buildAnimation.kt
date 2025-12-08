@@ -31,7 +31,7 @@ suspend fun buildAnimation(
                 SegmentFrameCanvas(
                     modifier = Modifier.fillMaxSize(),
                     frame = frame,
-                    screenSize = screenSize
+                    viewportSize = screenSize
                 )
             }
         }

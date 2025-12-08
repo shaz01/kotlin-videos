@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -59,9 +60,13 @@ fun VideoScreen(
 
     val currentFrame by videoController.currentFrame
     val currentDuration by videoController.currentDuration
+    val aspectRatio = remember { videoResolution.width.toFloat() / videoResolution.height.toFloat() }
+    var parentAspectRatio by remember { mutableFloatStateOf(-1f) }
 
     VideoScreenLayout(
-        modifier = modifier,
+        modifier = modifier.onGloballyPositioned {
+            parentAspectRatio = it.size.width.toFloat() / it.size.height.toFloat()
+        },
         controlsVisible = controlsVisible,
         isPlaying = videoController.isPlaying,
         progress = currentFrame.toFloat() / videoController.maxFrames.toFloat(),
@@ -69,20 +74,26 @@ fun VideoScreen(
         totalTimeSeconds = videoController.totalDuration.toLong(DurationUnit.SECONDS),
         onPlayPauseClick = {
             videoController.togglePlayPause()
+            @Suppress("AssignedValueIsNeverRead")
             interactionTrigger++
         },
         onSeek = { progress ->
             videoController.seekToProgress(progress)
+            @Suppress("AssignedValueIsNeverRead")
             interactionTrigger++
         },
         onExit = onExit,
         onToggleControls = {
+            @Suppress("AssignedValueIsNeverRead")
             controlsVisible = !controlsVisible
+            @Suppress("AssignedValueIsNeverRead")
             interactionTrigger++
         }
     ) {
         VideoPlayer(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .align(Alignment.Center)
+                .aspectRatio(aspectRatio, matchHeightConstraintsFirst = parentAspectRatio > aspectRatio),
             screenSize = videoResolution,
             contentScale = 1f,
             background = backgroundColor,
@@ -110,6 +121,7 @@ private fun VideoScreenLayout(
     Box(
         modifier = modifier
             .fillMaxSize()
+            .background(Color.Black)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -283,7 +295,7 @@ private fun SegmentFrameCanvasTestPreview() {
         com.olcayaras.figures.SegmentFrameCanvas(
             modifier = Modifier.fillMaxSize(),
             frame = getMockSegmentFrame(),
-            screenSize = screenSize
+            viewportSize = screenSize
         )
     }
 }

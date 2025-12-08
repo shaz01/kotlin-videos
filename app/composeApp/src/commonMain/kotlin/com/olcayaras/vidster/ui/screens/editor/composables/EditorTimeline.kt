@@ -97,7 +97,7 @@ fun LazyListScope.editorTimelineContent(
             selected = frame === selectedFrame,
             onClick = { onClick(frame) },
             segmentFrame = frame,
-            screenSize = screenSize,
+            viewportSize = screenSize,
             text = "Frame ${index + 1}"
         )
     }
@@ -109,7 +109,7 @@ private fun EditorTimelineFrame(
     selected: Boolean = false,
     onClick: (() -> Unit)? = null,
     segmentFrame: SegmentFrame,
-    screenSize: IntSize = IntSize(1920, 1080),
+    viewportSize: IntSize = IntSize(1920, 1080),
     backgroundColor: Color = Color.White,
     text: String
 ) {
@@ -127,7 +127,7 @@ private fun EditorTimelineFrame(
                 .background(backgroundColor)
                 .border(2.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(4.dp)),
             frame = segmentFrame,
-            screenSize = screenSize
+            viewportSize = viewportSize
         )
         Text(
             modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 4.dp),
@@ -147,7 +147,7 @@ private fun EditorTimelineFramePreview() {
                     modifier = Modifier.width(128.dp),
                     onClick = {},
                     segmentFrame = getMockSegmentFrame(),
-                    screenSize = IntSize(1920, 1080),
+                    viewportSize = IntSize(1920, 1080),
                     backgroundColor = Color.White,
                     text = "Frame 2"
                 )
@@ -156,7 +156,7 @@ private fun EditorTimelineFramePreview() {
                     onClick = {},
                     selected = true,
                     segmentFrame = getMockSegmentFrame(),
-                    screenSize = IntSize(1920, 1080),
+                    viewportSize = IntSize(1920, 1080),
                     backgroundColor = Color.White,
                     text = "Selected frame"
                 )

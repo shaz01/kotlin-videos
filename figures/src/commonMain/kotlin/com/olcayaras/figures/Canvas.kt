@@ -8,53 +8,31 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.toIntSize
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import kotlin.math.cos
-import kotlin.math.sin
 
-private fun DrawScope.withScreenSize(
-    screenSize: IntSize?,
-    block: DrawScope.() -> Unit
-) {
-    if (screenSize == null || screenSize.width <= 0 || screenSize.height <= 0) {
-        block()
-        return
-    }
-
-    val contentScale = if (screenSize.width > screenSize.height) {
-        size.width / screenSize.width
-    } else {
-        size.height / screenSize.height
-    }
-
-    withTransform({
-        scale(contentScale, contentScale)
-    }) {
-        block()
-    }
-}
-
-private fun DrawScope.withViewport(
+private fun DrawScope.transformViewport(
     viewport: Viewport,
-    pivotX: Float,
-    pivotY: Float,
+    viewportSize: IntSize,
     block: DrawScope.() -> Unit
 ) {
-    withTransform({
-        // Apply transforms around canvas center
-        translate(pivotX, pivotY)
-        rotate(degrees = viewport.rotation * (180f / Math.PI.toFloat()))
-        scale(viewport.scale, viewport.scale)
-        translate(-pivotX + viewport.offsetX, -pivotY + viewport.offsetY)
-    }) {
-        block()
+    if (viewportSize.width == 0 || viewportSize.height == 0) return
+
+    scale(
+        scaleX = (size.width / viewportSize.width),
+        scaleY = (size.height / viewportSize.height),
+        pivot = Offset.Zero
+    ) {
+        translate(-viewport.leftX, -viewport.topY) {
+            block()
+        }
     }
 }
 
@@ -78,6 +56,7 @@ private fun DrawScope.drawSegment(
                 cap = StrokeCap.Round
             )
         }
+
         SegmentType.Circle -> {
             drawCircle(
                 color = color,
@@ -86,6 +65,7 @@ private fun DrawScope.drawSegment(
                 style = Stroke(width = thickness)
             )
         }
+
         SegmentType.FilledCircle -> {
             drawFilledCircleShape(
                 color = color,
@@ -94,6 +74,7 @@ private fun DrawScope.drawSegment(
                 centerY = segment.centerY
             )
         }
+
         SegmentType.Rectangle -> {
             drawRectangleShape(
                 color = color,
@@ -105,6 +86,7 @@ private fun DrawScope.drawSegment(
                 endY = segment.endY
             )
         }
+
         is SegmentType.Ellipse -> {
             drawEllipseShape(
                 color = color,
@@ -116,6 +98,7 @@ private fun DrawScope.drawSegment(
                 centerY = segment.centerY
             )
         }
+
         is SegmentType.Arc -> {
             drawArcShape(
                 color = color,
@@ -141,30 +124,26 @@ private fun DrawScope.drawSegment(
  * The canvas that renders a [SegmentFrame].
  * Not interactive. Not usable for editor.
  *
- * @param screenSize If provided, the canvas will scale content as if it's rendering at this logical size.
+ * @param viewportSize If provided, the canvas will scale content as if it's rendering at this logical size.
  *                   Similar to ScaleBox but works with Canvas drawing. Automatically applies aspect ratio.
  */
 @Composable
 fun SegmentFrameCanvas(
     modifier: Modifier = Modifier,
     frame: SegmentFrame,
-    screenSize: IntSize? = null
+    viewportSize: IntSize? = null
 ) {
-    val finalModifier = if (screenSize != null) {
-        modifier.aspectRatio(screenSize.width.toFloat() / screenSize.height.toFloat())
+    val finalModifier = if (viewportSize != null) {
+        modifier.aspectRatio(viewportSize.width.toFloat() / viewportSize.height.toFloat())
     } else {
         modifier
     }
 
     Canvas(modifier = finalModifier) {
-        val centerX = size.width / 2
-        val centerY = size.height / 2
-
-        withScreenSize(screenSize) {
-            withViewport(frame.viewport, pivotX = centerX, pivotY = centerY) {
-                frame.segments.forEach { segment ->
-                    drawSegment(segment, Color.Black, 4f)
-                }
+        val size = viewportSize ?: size.toIntSize()
+        transformViewport(frame.viewport, size) {
+            frame.segments.forEach { segment ->
+                drawSegment(segment, Color.Black, 4f)
             }
         }
     }
