@@ -233,7 +233,6 @@ private fun hitTestViewportEdge(
     viewportRect: Rect,
     scale: Float
 ): Boolean {
-    println("viewport: $viewportRect")
     val threshold = VIEWPORT_EDGE_HIT_DISTANCE / scale
 
     // Check if point is inside the expanded rect (rect + threshold on all sides)
