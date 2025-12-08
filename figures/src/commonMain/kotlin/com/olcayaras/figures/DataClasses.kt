@@ -1,5 +1,6 @@
 package com.olcayaras.figures
 
+import androidx.compose.ui.geometry.Offset
 import kotlinx.serialization.Serializable
 import kotlin.math.cos
 import kotlin.math.sin
@@ -231,14 +232,16 @@ fun Figure.compileForEditing(): List<CompiledJoint> =
 
 @Serializable
 data class Viewport(
-    val offsetX: Float = 0f,
-    val offsetY: Float = 0f,
+    val leftX: Float = 0f,
+    val topY: Float = 0f,
     val scale: Float = 1f,
     val rotation: Float = 0f // radians
 ) {
+    val topLeft: Offset get() = Offset(leftX, topY)
+
     fun lerp(other: Viewport, t: Float): Viewport = Viewport(
-        offsetX = offsetX + (other.offsetX - offsetX) * t,
-        offsetY = offsetY + (other.offsetY - offsetY) * t,
+        leftX = leftX + (other.leftX - leftX) * t,
+        topY = topY + (other.topY - topY) * t,
         scale = scale + (other.scale - scale) * t,
         rotation = rotation + (other.rotation - rotation) * t
     )

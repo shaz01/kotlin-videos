@@ -74,8 +74,8 @@ fun getMockShapesDemo(x: Float = 300f, y: Float = 300f): Figure {
 fun getMockSegmentFrame(name: String = "humanoid"): SegmentFrame {
     return SegmentFrame(
         viewport = Viewport(
-            offsetX = 0f,
-            offsetY = 0f,
+            leftX = 0f,
+            topY = 0f,
             rotation = 0f,
             scale = 1f
         ),

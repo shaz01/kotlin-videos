@@ -17,7 +17,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
@@ -30,6 +29,7 @@ import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
+import androidx.compose.ui.unit.toSize
 import kotlin.math.atan2
 import kotlin.math.sqrt
 
@@ -68,31 +68,12 @@ fun InfiniteCanvas(
     // Use rememberUpdatedState to always read latest values inside gesture handler
     val currentCanvasState by rememberUpdatedState(canvasState)
     val currentViewport by rememberUpdatedState(viewport)
-    val currentScreenSize by rememberUpdatedState(screenSize)
     val currentOnCanvasStateChange by rememberUpdatedState(onCanvasStateChange)
     val currentOnViewportChanged by rememberUpdatedState(onViewportChanged)
     val currentOnJointAngleChanged by rememberUpdatedState(onJointAngleChanged)
     val currentOnFigureMoved by rememberUpdatedState(onFigureMoved)
 
-    // Calculate viewport rectangle in canvas coordinates
-    // The viewport represents the visible area in the logical screen space
-    // SegmentFrameCanvas uses the screen center (screenSize/2) as the pivot for viewport transforms
-    // So the viewport rect should be positioned to match this: centered at (screenSize/2) with offset applied
-    val viewportWidth = screenSize.width / viewport.scale
-    val viewportHeight = screenSize.height / viewport.scale
-    // The viewport rect shows the visible "window" in canvas space
-    // When viewport.offsetX > 0, content moves right, meaning camera moved left,
-    // so the visible window (rect) moves left relative to the canvas
-    val screenCenterX = screenSize.width / 2f
-    val screenCenterY = screenSize.height / 2f
-    val viewportCenterX = screenCenterX - viewport.offsetX
-    val viewportCenterY = screenCenterY - viewport.offsetY
-    val viewportRect = Rect(
-        left = viewportCenterX - viewportWidth / 2,
-        top = viewportCenterY - viewportHeight / 2,
-        right = viewportCenterX + viewportWidth / 2,
-        bottom = viewportCenterY + viewportHeight / 2
-    )
+    val viewportRect by rememberUpdatedState(Rect(offset = viewport.topLeft, size = screenSize.toSize()))
 
     Canvas(
         modifier = modifier
@@ -119,27 +100,13 @@ fun InfiniteCanvas(
                 awaitEachGesture {
                     val firstDown = awaitFirstDown(requireUnconsumed = false)
 
-                    // Calculate current viewport rect for hit testing
-                    val currentViewportWidth = currentScreenSize.width / currentViewport.scale
-                    val currentViewportHeight = currentScreenSize.height / currentViewport.scale
-                    val currentScreenCenterX = currentScreenSize.width / 2f
-                    val currentScreenCenterY = currentScreenSize.height / 2f
-                    val currentViewportCenterX = currentScreenCenterX - currentViewport.offsetX
-                    val currentViewportCenterY = currentScreenCenterY - currentViewport.offsetY
-                    val currentViewportRect = Rect(
-                        left = currentViewportCenterX - currentViewportWidth / 2,
-                        top = currentViewportCenterY - currentViewportHeight / 2,
-                        right = currentViewportCenterX + currentViewportWidth / 2,
-                        bottom = currentViewportCenterY + currentViewportHeight / 2
-                    )
-
                     // Hit test to determine drag target
                     var dragTarget = findDragTarget(
                         position = firstDown.position,
                         canvasState = currentCanvasState,
                         compiledJoints = compiledJointsForDrawing,
                         rotationAllowed = rotationAllowed,
-                        viewportRect = currentViewportRect
+                        viewportRect = viewportRect
                     )
 
                     // Process pointer events until all fingers are lifted
@@ -204,8 +171,8 @@ private fun DrawScope.drawViewportRect(rect: Rect) {
     // Draw dashed rectangle border
     drawRect(
         color = Color.Blue.copy(alpha = 0.6f),
-        topLeft = Offset(rect.left, rect.top),
-        size = Size(rect.width, rect.height),
+        topLeft = rect.topLeft,
+        size = rect.size,
         style = Stroke(width = strokeWidth, pathEffect = dashPattern)
     )
 
@@ -266,6 +233,7 @@ private fun hitTestViewportEdge(
     viewportRect: Rect,
     scale: Float
 ): Boolean {
+    println("viewport: $viewportRect")
     val threshold = VIEWPORT_EDGE_HIT_DISTANCE / scale
 
     // Check if point is inside the expanded rect (rect + threshold on all sides)
@@ -353,8 +321,8 @@ private fun handleSingleTouch(
             val deltaX = canvasX - prevCanvasX
             val deltaY = canvasY - prevCanvasY
             val newViewport = viewport.copy(
-                offsetX = viewport.offsetX - deltaX,
-                offsetY = viewport.offsetY - deltaY
+                leftX = viewport.leftX + deltaX,
+                topY = viewport.topY + deltaY
             )
             onViewportChanged(newViewport)
             change.consume()
