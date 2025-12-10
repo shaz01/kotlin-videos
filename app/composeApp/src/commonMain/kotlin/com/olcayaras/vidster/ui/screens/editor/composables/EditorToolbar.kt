@@ -32,10 +32,10 @@ fun EditorToolbar(
     content: @Composable () -> Unit
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = 0.9f),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.95f),
         modifier = modifier
-            .clip(toolbarRadius)
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, toolbarRadius)
+//            .clip(toolbarRadius)
+//            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, toolbarRadius)
     ) {
         Row(
             modifier = Modifier.padding(contentPadding),

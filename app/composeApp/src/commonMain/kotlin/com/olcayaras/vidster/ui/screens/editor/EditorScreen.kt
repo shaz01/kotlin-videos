@@ -25,10 +25,8 @@ import com.olcayaras.vidster.ui.screens.editor.composables.EditorTimelineColumn
 import com.olcayaras.vidster.ui.screens.editor.composables.EditorToolbar
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Crosshair
-import compose.icons.feathericons.Loader
 import compose.icons.feathericons.Play
 import compose.icons.feathericons.Plus
-import compose.icons.feathericons.Type
 import io.github.aakira.napier.Napier
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlin.math.roundToInt
@@ -155,7 +153,6 @@ fun EditorScreen(
                 modifier = Modifier
                     .fillMaxHeight()
                     .width(128.dp)
-                    .padding(16.dp)
                     .onGloballyPositioned {
                         timelineWidth = it.boundsInParent().right.roundToInt()
                     },
@@ -180,7 +177,6 @@ fun EditorScreen(
                 EditorToolbar(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp)
                         .onGloballyPositioned {
                             toolbarHeight = it.boundsInParent().bottom.roundToInt()
                         }
@@ -188,17 +184,9 @@ fun EditorScreen(
                     FilledTonalIconButton(onClick = { take(EditorEvent.PlayAnimation) }) {
                         Icon(FeatherIcons.Play, contentDescription = "Play Animation")
                     }
-                    VerticalDivider(Modifier.height(24.dp), color = MaterialTheme.colorScheme.outlineVariant)
-                    IconButton(onClick = { /*TODO*/ }) {
-                        Icon(FeatherIcons.Type, contentDescription = null)
-                    }
                     IconButton(onClick = { take(EditorEvent.AddFrame) }) {
                         Icon(FeatherIcons.Plus, contentDescription = "Add Frame")
                     }
-                    IconButton(onClick = { /*TODO*/ }) {
-                        Icon(FeatherIcons.Loader, contentDescription = null)
-                    }
-                    VerticalDivider(Modifier.height(24.dp), color = MaterialTheme.colorScheme.outlineVariant)
                     IconButton(onClick = ::resetViewportToCenter) {
                         Icon(FeatherIcons.Crosshair, contentDescription = "Reset View")
                     }
@@ -210,7 +198,6 @@ fun EditorScreen(
                 modifier = Modifier
                     .width(200.dp)
                     .fillMaxHeight()
-                    .padding(16.dp)
                     .onGloballyPositioned {
                         propertiesPanelLeft = it.boundsInParent().left.roundToInt()
                     }

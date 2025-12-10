@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -32,8 +33,8 @@ import com.olcayaras.figures.getMockSegmentFrame
 import com.olcayaras.vidster.ui.theme.AppTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-private val innerRadius = RoundedCornerShape(16.dp)
-private val outerRadius = RoundedCornerShape(24.dp)
+private val innerRadius = RectangleShape
+private val outerRadius = RectangleShape
 
 @Composable
 fun EditorTimelineRow(
@@ -45,8 +46,8 @@ fun EditorTimelineRow(
     innerPadding: Dp = 0.dp
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = 0.9f),
-        modifier = modifier.clip(outerRadius).border(1.dp, MaterialTheme.colorScheme.outlineVariant, outerRadius)
+        color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.95f),
+        modifier = modifier.clip(outerRadius)
     ) {
         LazyRow(contentPadding = PaddingValues(innerPadding)) {
             editorTimelineContent(
@@ -69,8 +70,8 @@ fun EditorTimelineColumn(
     innerPadding: Dp = 0.dp
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = 0.9f),
-        modifier = modifier.clip(outerRadius).border(1.dp, MaterialTheme.colorScheme.outlineVariant, outerRadius)
+        color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.95f),
+        modifier = modifier.clip(outerRadius)
     ) {
         LazyColumn(contentPadding = PaddingValues(innerPadding)) {
             editorTimelineContent(
