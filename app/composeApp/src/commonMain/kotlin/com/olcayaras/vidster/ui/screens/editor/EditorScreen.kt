@@ -29,6 +29,7 @@ import compose.icons.feathericons.Loader
 import compose.icons.feathericons.Play
 import compose.icons.feathericons.Plus
 import compose.icons.feathericons.Type
+import io.github.aakira.napier.Napier
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlin.math.roundToInt
 
@@ -68,8 +69,8 @@ private fun calculateCenteredOffset(
     val equalizingPaddingY = (safeHeight - viewportHeight * scale) / 2
 
     return CanvasState(
-        offsetX = safeLeft + equalizingPaddingX + viewport.leftX,
-        offsetY = safeTop + equalizingPaddingY + viewport.topY,
+        offsetX = safeLeft + equalizingPaddingX - viewport.leftX * scale,
+        offsetY = safeTop + equalizingPaddingY - viewport.topY * scale,
         scale = scale
     )
 }
@@ -105,7 +106,7 @@ fun EditorScreen(
             viewportSize = model.screenSize
         )?.let {
             take(EditorEvent.UpdateCanvasState(it))
-        }
+        } ?: Napier.e { "Failed to calculate centered offset" }
     }
 
     // Set initial offset when measurements are available
