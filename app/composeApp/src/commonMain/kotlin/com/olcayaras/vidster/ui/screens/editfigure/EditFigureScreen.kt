@@ -13,8 +13,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.olcayaras.figures.CanvasState
@@ -31,7 +29,6 @@ import compose.icons.feathericons.Check
  */
 private fun calculateFigureCenteredState(
     canvasSize: IntSize,
-    density: Density,
     compiledJoints: List<CompiledJoint>,
     padding: Float = 50f
 ): CanvasState? {
@@ -88,16 +85,16 @@ fun EditFigureScreen(
     model: EditFigureState,
     take: (EditFigureEvent) -> Unit
 ) {
-    val density = LocalDensity.current
     var canvasSize by remember { mutableStateOf(IntSize.Zero) }
     var hasInitializedOffset by remember { mutableStateOf(false) }
 
     // Center figure when canvas size is available
     LaunchedEffect(canvasSize) {
         if (canvasSize != IntSize.Zero && !hasInitializedOffset) {
-            calculateFigureCenteredState(canvasSize, density, model.compiledJoints)?.let {
+            calculateFigureCenteredState(canvasSize, model.compiledJoints)?.let {
                 take(EditFigureEvent.UpdateCanvasState(it))
             }
+            @Suppress("AssignedValueIsNeverRead") // ide bug
             hasInitializedOffset = true
         }
     }

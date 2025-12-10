@@ -16,7 +16,6 @@ import com.olcayaras.figures.SegmentType
 import com.olcayaras.figures.compileForEditing
 import com.olcayaras.figures.deepCopy
 import com.olcayaras.figures.findJointById
-import com.olcayaras.figures.findParentOf
 import com.olcayaras.figures.generateUniqueJointId
 import com.olcayaras.figures.removeJoint
 
@@ -96,7 +95,6 @@ class EditFigureViewModel(
 
     private fun updateJointLength(length: Float) {
         val jointId = _selectedJointId.value ?: return
-        val joint = findJointById(_figure.value.root, jointId) ?: return
 
         // Joint length is immutable, so we need to replace the joint
         replaceJoint(jointId) { it.copy(length = length) }
