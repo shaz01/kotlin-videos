@@ -39,6 +39,10 @@ sealed interface EditorEvent {
     data class UpdateJointAngle(val figure: Figure, val joint: Joint, val newAngle: Float) : EditorEvent
     data class MoveFigure(val figure: Figure, val newX: Float, val newY: Float) : EditorEvent
 
+    // Figure management
+    data class EditFigure(val figureIndex: Int) : EditorEvent
+    data object AddNewFigure : EditorEvent
+
     // Playback
     data object PlayAnimation : EditorEvent
 }
@@ -163,6 +167,61 @@ class EditorViewModel(
         )
     }
 
+    private fun editFigure(figureIndex: Int) {
+        val frame = _frames.value.getOrNull(_selectedFrameIndex.value) ?: return
+        val figure = frame.figures.getOrNull(figureIndex) ?: return
+
+        navigation.bringToFront(
+            Route.EditFigure(
+                figure = figure.deepCopy(),
+                figureIndex = figureIndex,
+                onFinish = { resultFigure ->
+                    resultFigure?.let { updateFigure(it, figureIndex) }
+                }
+            )
+        )
+    }
+
+    private fun addNewFigure() {
+        navigation.bringToFront(
+            Route.EditFigure(
+                figure = null,
+                figureIndex = null,
+                onFinish = { resultFigure ->
+                    resultFigure?.let { addFigure(it) }
+                }
+            )
+        )
+    }
+
+    private fun updateFigure(figure: Figure, figureIndex: Int) {
+        val frameIndex = _selectedFrameIndex.value
+        val currentFrames = _frames.value.toMutableList()
+        if (frameIndex !in currentFrames.indices) return
+
+        val frame = currentFrames[frameIndex]
+        val newFigures = frame.figures.toMutableList()
+        if (figureIndex in newFigures.indices) {
+            newFigures[figureIndex] = figure
+            currentFrames[frameIndex] = frame.copy(figures = newFigures)
+            _frames.value = currentFrames
+            _figureModificationCount.value++
+        }
+    }
+
+    private fun addFigure(figure: Figure) {
+        val frameIndex = _selectedFrameIndex.value
+        val currentFrames = _frames.value.toMutableList()
+        if (frameIndex !in currentFrames.indices) return
+
+        val frame = currentFrames[frameIndex]
+        val newFigures = frame.figures.toMutableList()
+        newFigures.add(figure)
+        currentFrames[frameIndex] = frame.copy(figures = newFigures)
+        _frames.value = currentFrames
+        _figureModificationCount.value++
+    }
+
     @Composable
     override fun models(events: Flow<EditorEvent>): EditorState {
         val frames by _frames.collectAsState()
@@ -181,6 +240,8 @@ class EditorViewModel(
                     is EditorEvent.UpdateViewport -> updateViewport(event.viewport)
                     is EditorEvent.UpdateJointAngle -> updateJointAngle(event.joint, event.newAngle)
                     is EditorEvent.MoveFigure -> moveFigure(event.figure, event.newX, event.newY)
+                    is EditorEvent.EditFigure -> editFigure(event.figureIndex)
+                    is EditorEvent.AddNewFigure -> addNewFigure()
                     is EditorEvent.PlayAnimation -> playAnimation(screenSize)
                 }
             }
