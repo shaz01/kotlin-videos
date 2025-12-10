@@ -66,54 +66,13 @@ The AI agent can provide unique value in these areas:
 
 ---
 
-## Suggested Data Model (Simplified)
-
-```
-Figure
-├── id: UUID
-├── name: String
-└── rootJoint: Joint
-
-Joint
-├── id: UUID
-├── position: Vec2 (relative to parent, or absolute for root)
-├── children: List<Segment>
-
-Segment
-├── id: UUID
-├── type: LINE | CIRCLE
-├── length: Float
-├── angle: Float (relative to parent)
-├── thickness: Float
-├── color: Color
-└── endJoint: Joint? (for chaining)
-
-Frame
-├── index: Int
-├── figureStates: Map<FigureId, FigureState>
-└── backgroundColor: Color
-
-FigureState
-├── figureId: UUID
-├── position: Vec2 (root position)
-└── jointAngles: Map<JointId, Float>
-
-Animation
-├── name: String
-├── frames: List<Frame>
-├── figures: List<Figure>
-└── frameRate: Int
-```
-
----
-
 ## Week 1 Milestones
 
-- [ ] Figure data model + rendering
-- [ ] Joint manipulation (drag to rotate)
-- [ ] Canvas with single figure
+- [X] Figure data model + rendering
+- [X] Joint manipulation (drag to rotate)
+- [X] Canvas with single figure
 - [ ] Timeline UI (add/remove/select frames)
-- [ ] Basic playback
+- [X] Basic playback
 - [ ] JSON serialization
 
 ## Week 2 Milestones
