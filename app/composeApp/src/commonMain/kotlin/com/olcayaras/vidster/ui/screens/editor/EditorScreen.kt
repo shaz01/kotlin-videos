@@ -1,6 +1,10 @@
 package com.olcayaras.vidster.ui.screens.editor
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -10,8 +14,12 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
@@ -88,6 +96,7 @@ fun EditorScreen(
     val density = LocalDensity.current
     // Measurement state for overlay sizes
     var timelineWidth by remember { mutableIntStateOf(0) }
+    var timelineTargetWidth by remember { mutableStateOf(160.dp) }
     var toolbarHeight by remember { mutableIntStateOf(0) }
 
     var propertiesPanelLeft by remember { mutableIntStateOf(0) }
@@ -148,24 +157,60 @@ fun EditorScreen(
                 .fillMaxSize()
                 .zIndex(100f)
         ) {
-            // Left: Timeline
-            EditorTimelineColumn(
+            // Left: Timeline with resize handle
+            Box(
                 modifier = Modifier
                     .fillMaxHeight()
-                    .width(128.dp)
                     .onGloballyPositioned {
                         timelineWidth = it.boundsInParent().right.roundToInt()
-                    },
-                frames = model.segmentFrames,
-                onClick = { segmentFrame ->
-                    val index = model.segmentFrames.indexOf(segmentFrame)
-                    if (index >= 0) {
-                        take(EditorEvent.SelectFrame(index))
                     }
-                },
-                selectedFrame = model.selectedSegmentFrame,
-                screenSize = model.screenSize
-            )
+            ) {
+                EditorTimelineColumn(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .width(timelineTargetWidth),
+                    frames = model.segmentFrames,
+                    onClick = { segmentFrame ->
+                        val index = model.segmentFrames.indexOf(segmentFrame)
+                        if (index >= 0) {
+                            take(EditorEvent.SelectFrame(index))
+                        }
+                    },
+                    selectedFrame = model.selectedSegmentFrame,
+                    screenSize = model.screenSize
+                )
+
+                // Resize handle
+                val resizeInteractionSource = remember { MutableInteractionSource() }
+                val isHovered by resizeInteractionSource.collectIsHoveredAsState()
+                val isDragging = remember { mutableStateOf(false) }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .align(Alignment.CenterEnd)
+                        .width(8.dp)
+                        .hoverable(resizeInteractionSource)
+                        .pointerHoverIcon(PointerIcon.Hand)
+                        .pointerInput(Unit) {
+                            detectDragGestures(
+                                onDragStart = { isDragging.value = true },
+                                onDragEnd = { isDragging.value = false },
+                                onDragCancel = { isDragging.value = false }
+                            ) { change, dragAmount ->
+                                change.consume()
+                                val newWidth = timelineTargetWidth + (dragAmount.x / density.density).dp
+                                timelineTargetWidth = newWidth.coerceIn(100.dp, 400.dp)
+                            }
+                        }
+                        .background(
+                            if (isHovered || isDragging.value)
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                            else
+                                Color.Transparent
+                        )
+                )
+            }
 
             // Center: Main content area with toolbar
             Column(

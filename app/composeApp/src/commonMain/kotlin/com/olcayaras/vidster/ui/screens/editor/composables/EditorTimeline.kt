@@ -94,7 +94,7 @@ fun LazyListScope.editorTimelineContent(
 ) {
     itemsIndexed(frames) { index, frame ->
         EditorTimelineFrame(
-            modifier = Modifier.width(128.dp),
+            modifier = Modifier.fillMaxWidth(),
             selected = frame === selectedFrame,
             onClick = { onClick(frame) },
             segmentFrame = frame,
