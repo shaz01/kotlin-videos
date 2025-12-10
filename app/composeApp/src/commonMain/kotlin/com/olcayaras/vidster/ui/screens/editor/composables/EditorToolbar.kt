@@ -34,8 +34,6 @@ fun EditorToolbar(
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.95f),
         modifier = modifier
-//            .clip(toolbarRadius)
-//            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, toolbarRadius)
     ) {
         Row(
             modifier = Modifier.padding(contentPadding),
