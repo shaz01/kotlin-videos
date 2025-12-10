@@ -199,7 +199,7 @@ fun EditorScreen(
                                 onDragCancel = { isDragging.value = false }
                             ) { change, dragAmount ->
                                 change.consume()
-                                val newWidth = timelineTargetWidth + (dragAmount.x / density.density).dp
+                                val newWidth = timelineTargetWidth + with(density) { dragAmount.x.toDp() }
                                 timelineTargetWidth = newWidth.coerceIn(100.dp, 400.dp)
                             }
                         }
