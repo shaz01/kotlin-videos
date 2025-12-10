@@ -32,6 +32,10 @@ import compose.icons.feathericons.Type
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlin.math.roundToInt
 
+/**
+ * Calculates the centered offset for the canvas based on viewport and available space.
+ * @return CanvasState containing the calculated offset and scale, or null if the canvas size is zero
+ */
 private fun calculateCenteredOffset(
     canvasSize: IntSize,
     density: Density,
@@ -55,6 +59,8 @@ private fun calculateCenteredOffset(
     val safeHeight = safeBottom - safeTop
     val viewportWidth = viewportSize.width
     val viewportHeight = viewportSize.height
+    if (safeWidth <= 0 || safeHeight <= 0) return null
+    if (viewportWidth <= 0 || viewportHeight <= 0) return null
 
     val scale = minOf(safeWidth / viewportWidth, safeHeight / viewportHeight)
 
@@ -68,6 +74,13 @@ private fun calculateCenteredOffset(
     )
 }
 
+/**
+ * Main editor screen composable that displays the animation editor interface.
+ * Contains an infinite canvas for figure manipulation, timeline, toolbar, and properties panel.
+ *
+ * @param model The current state of the editor
+ * @param take Callback to handle editor events
+ */
 @Composable
 fun EditorScreen(
     model: EditorState,
@@ -81,7 +94,7 @@ fun EditorScreen(
     var propertiesPanelLeft by remember { mutableIntStateOf(0) }
     var canvasSize by remember { mutableStateOf(IntSize.Zero) }
 
-    fun center(){
+    fun resetViewportToCenter() {
         calculateCenteredOffset(
             canvasSize = canvasSize,
             density = density,
@@ -101,7 +114,7 @@ fun EditorScreen(
         if (canvasSize != IntSize.Zero && !hasInitializedOffset) {
             @Suppress("AssignedValueIsNeverRead") // ide bug
             hasInitializedOffset = true
-            center()
+            resetViewportToCenter()
         }
     }
 
@@ -185,7 +198,7 @@ fun EditorScreen(
                         Icon(FeatherIcons.Loader, contentDescription = null)
                     }
                     VerticalDivider(Modifier.height(24.dp), color = MaterialTheme.colorScheme.outlineVariant)
-                    IconButton(onClick = ::center) {
+                    IconButton(onClick = ::resetViewportToCenter) {
                         Icon(FeatherIcons.Crosshair, contentDescription = "Reset View")
                     }
                 }
