@@ -275,7 +275,7 @@ private fun handleSingleTouch(
                 leftX = viewport.leftX + deltaX,
                 topY = viewport.topY + deltaY
             )
-        onViewportChanged(newViewport)
+            onViewportChanged(newViewport)
             change.consume()
         }
 

@@ -72,13 +72,28 @@ private fun JointPropertyFields(
     var localLength by remember(selectedJoint.id) { mutableStateOf(selectedJoint.length) }
     var localAngle by remember(selectedJoint.id) { mutableStateOf(selectedJoint.angle) }
 
-    // ID field
+    // Local state for ID with validation
+    var localId by remember(selectedJoint.id) { mutableStateOf(selectedJoint.id) }
+    var idError by remember(localId) { mutableStateOf(false) }
+
+    // ID field with validation
     OutlinedTextField(
-        value = selectedJoint.id,
-        onValueChange = onUpdateId,
+        value = localId,
+        onValueChange = { newId ->
+            localId = newId
+            val isValid = newId.isNotBlank()
+            idError = !isValid
+            if (isValid) {
+                onUpdateId(newId)
+            }
+        },
         label = { Text("ID") },
         modifier = Modifier.fillMaxWidth(),
-        singleLine = true
+        singleLine = true,
+        isError = idError,
+        supportingText = if (idError) {
+            { Text("ID cannot be empty") }
+        } else null
     )
 
     // Length slider - use local state for smooth updates

@@ -19,7 +19,16 @@ import kotlin.math.sqrt
 // Constants
 // =============================================================================
 
+/**
+ * The radius (in pixels) used to detect user interaction with a joint control point.
+ * If the user's pointer is within this distance from a joint tip, it is considered a hit.
+ */
 const val JOINT_HIT_RADIUS = 48f
+
+/**
+ * The maximum distance (in pixels) from a line segment at which a user interaction
+ * is considered to hit the segment. Used for selecting or interacting with segments.
+ */
 const val SEGMENT_HIT_DISTANCE = 20f
 
 // =============================================================================

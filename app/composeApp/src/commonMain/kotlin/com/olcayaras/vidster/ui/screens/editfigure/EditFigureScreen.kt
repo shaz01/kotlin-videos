@@ -25,6 +25,8 @@ import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Check
 import compose.icons.feathericons.Edit2
 
+private const val MAX_INITIAL_SCALE = 2f
+
 /**
  * Calculates canvas state to center and fit a figure within the available space.
  */
@@ -62,7 +64,7 @@ private fun calculateFigureCenteredState(
     // Calculate scale to fit
     val scaleX = canvasSize.width / figureWidth
     val scaleY = canvasSize.height / figureHeight
-    val scale = minOf(scaleX, scaleY, 2f) // Cap at 2x zoom
+    val scale = minOf(scaleX, scaleY, MAX_INITIAL_SCALE)
 
     // Calculate offset to center
     val figureCenterX = (minX + maxX) / 2

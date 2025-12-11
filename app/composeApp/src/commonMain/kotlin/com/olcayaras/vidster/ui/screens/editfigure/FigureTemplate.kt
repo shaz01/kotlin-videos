@@ -5,6 +5,9 @@ import com.olcayaras.figures.Joint
 import com.olcayaras.figures.SegmentType
 import kotlin.math.PI
 
+private const val DEFAULT_FIGURE_X = 400f
+private const val DEFAULT_FIGURE_Y = 300f
+
 /**
  * Templates for creating new figures.
  */
@@ -12,7 +15,7 @@ enum class FigureTemplate(val displayName: String) {
     BLANK("Blank"),
     HUMAN("Human");
 
-    fun createFigure(x: Float = 400f, y: Float = 300f): Figure {
+    fun createFigure(x: Float = DEFAULT_FIGURE_X, y: Float = DEFAULT_FIGURE_Y): Figure {
         return when (this) {
             BLANK -> Figure(
                 name = "New Figure",

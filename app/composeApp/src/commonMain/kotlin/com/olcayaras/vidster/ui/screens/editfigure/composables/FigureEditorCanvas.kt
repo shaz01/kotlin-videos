@@ -21,6 +21,8 @@ import androidx.compose.ui.input.pointer.positionChanged
 import com.olcayaras.figures.*
 import kotlin.math.atan2
 
+private const val DRAG_THRESHOLD_DISTANCE = 3f
+
 /**
  * Canvas for editing a single figure with selection support.
  * Unlike InfiniteCanvas, this focuses on a single figure and supports joint selection.
@@ -93,7 +95,7 @@ fun FigureEditorCanvas(
                             val change = event.changes.first()
                             if (change.positionChanged()) {
                                 val delta = change.position - change.previousPosition
-                                if (delta.getDistance() > 3f) {
+                                if (delta.getDistance() > DRAG_THRESHOLD_DISTANCE) {
                                     hasMoved = true
                                 }
                             }
