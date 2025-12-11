@@ -9,17 +9,21 @@ import androidx.compose.ui.unit.IntSize
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.pop
+import com.olcayaras.figures.Figure
 import com.olcayaras.figures.SegmentFrame
 import com.olcayaras.vidster.ViewModel
 import com.olcayaras.vidster.previewer.rememberVideoController
 import com.olcayaras.vidster.ui.navigation.NavigationFactory
 import com.olcayaras.vidster.ui.screens.editor.EditorScreen
 import com.olcayaras.vidster.ui.screens.editor.EditorViewModel
+import com.olcayaras.vidster.ui.screens.editfigure.EditFigureScreen
+import com.olcayaras.vidster.ui.screens.editfigure.EditFigureViewModel
 import com.olcayaras.vidster.ui.screens.video.VideoEvent
 import com.olcayaras.vidster.ui.screens.video.VideoScreen
 import com.olcayaras.vidster.ui.screens.video.VideoViewModel
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 /**
  * Base routes for the app.
@@ -34,6 +38,14 @@ sealed class Route {
         val videoFrames: List<SegmentFrame>,
         val videoScreenWidth: Int,
         val videoScreenHeight: Int
+    ) : Route()
+
+    @Serializable
+    data class EditFigure(
+        val figure: Figure?,
+        val figureIndex: Int?,
+        @Transient
+        val onFinish: ((Figure?) -> Unit)? = null,
     ) : Route()
 
     companion object : NavigationFactory<Route> {
@@ -53,6 +65,19 @@ sealed class Route {
                     frames = route.videoFrames,
                     screenSize = IntSize(route.videoScreenWidth, route.videoScreenHeight),
                     onExit = { navigation.pop() }
+                )
+
+                is EditFigure -> EditFigureViewModel(
+                    c = componentContext,
+                    initialFigure = route.figure,
+                    onSave = { figure ->
+                        route.onFinish?.invoke(figure)
+                        navigation.pop()
+                    },
+                    onCancel = {
+                        route.onFinish?.invoke(null)
+                        navigation.pop()
+                    }
                 )
             }
         }
@@ -76,6 +101,11 @@ sealed class Route {
                             onExit = { viewModel.take(VideoEvent.Exit) }
                         )
                     }
+                }
+
+                is EditFigureViewModel -> {
+                    val state by viewModel.models.collectAsState()
+                    EditFigureScreen(state, viewModel::take)
                 }
 
                 else -> throw IllegalStateException("Instance is $viewModel but that class is not known")

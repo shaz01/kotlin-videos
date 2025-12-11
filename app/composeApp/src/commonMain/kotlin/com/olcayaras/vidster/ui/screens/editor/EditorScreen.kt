@@ -33,8 +33,10 @@ import com.olcayaras.vidster.ui.screens.editor.composables.EditorTimelineColumn
 import com.olcayaras.vidster.ui.screens.editor.composables.EditorToolbar
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Crosshair
+import compose.icons.feathericons.Edit2
 import compose.icons.feathericons.Play
 import compose.icons.feathericons.Plus
+import compose.icons.feathericons.User
 import io.github.aakira.napier.Napier
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlin.math.roundToInt
@@ -120,7 +122,6 @@ fun EditorScreen(
     var hasInitializedOffset by remember { mutableStateOf(false) }
     LaunchedEffect(timelineWidth, toolbarHeight, propertiesPanelLeft, canvasSize) {
         if (canvasSize != IntSize.Zero && !hasInitializedOffset) {
-            @Suppress("AssignedValueIsNeverRead") // ide bug
             hasInitializedOffset = true
             resetViewportToCenter()
         }
@@ -247,8 +248,51 @@ fun EditorScreen(
                         propertiesPanelLeft = it.boundsInParent().left.roundToInt()
                     }
             ) {
-                Text("Properties", style = MaterialTheme.typography.titleMedium)
-                // Properties content will go here
+                Text("Figures", style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.height(8.dp))
+
+                // List figures in current frame
+                model.selectedFigures.forEachIndexed { index, figure ->
+                    OutlinedCard(
+                        onClick = { take(EditorEvent.EditFigure(index)) },
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                FeatherIcons.User,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                figure.name,
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Icon(
+                                FeatherIcons.Edit2,
+                                contentDescription = "Edit",
+                                modifier = Modifier.size(14.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(8.dp))
+
+                // Add new figure button
+                OutlinedButton(
+                    onClick = { take(EditorEvent.AddNewFigure) },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(FeatherIcons.Plus, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("Add Figure")
+                }
             }
         }
     }

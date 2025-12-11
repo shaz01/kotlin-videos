@@ -16,7 +16,7 @@ import kotlin.math.sin
  * @param centerX The X coordinate of the circle's center
  * @param centerY The Y coordinate of the circle's center
  */
-internal fun DrawScope.drawFilledCircleShape(
+fun DrawScope.drawFilledCircleShape(
     color: Color,
     radius: Float,
     centerX: Float,
@@ -40,7 +40,7 @@ internal fun DrawScope.drawFilledCircleShape(
  * @param endX The X coordinate of the segment's end
  * @param endY The Y coordinate of the segment's end
  */
-internal fun DrawScope.drawRectangleShape(
+fun DrawScope.drawRectangleShape(
     color: Color,
     length: Float,
     angle: Float,
@@ -77,7 +77,7 @@ internal fun DrawScope.drawRectangleShape(
  * @param centerX The X coordinate of the ellipse's center
  * @param centerY The Y coordinate of the ellipse's center
  */
-internal fun DrawScope.drawEllipseShape(
+fun DrawScope.drawEllipseShape(
     color: Color,
     thickness: Float,
     length: Float,
@@ -114,7 +114,7 @@ internal fun DrawScope.drawEllipseShape(
  * @param centerX The X coordinate of the arc's center
  * @param centerY The Y coordinate of the arc's center
  */
-internal fun DrawScope.drawArcShape(
+fun DrawScope.drawArcShape(
     color: Color,
     thickness: Float,
     length: Float,
