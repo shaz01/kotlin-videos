@@ -29,6 +29,15 @@ import kotlin.math.atan2
 private const val VIEWPORT_EDGE_HIT_DISTANCE = 20f
 
 /**
+ * Represents a frame to be rendered as onion skin with a specific opacity and color.
+ */
+data class OnionSkinLayer(
+    val compiledJoints: List<CompiledJoint>,
+    val alpha: Float,
+    val color: Color
+)
+
+/**
  * An infinite canvas for editing stick figures with pan/zoom support.
  * Shows a draggable viewport rectangle representing the camera view area.
  */
@@ -41,6 +50,7 @@ fun InfiniteCanvas(
     screenSize: IntSize = IntSize(1920, 1080),
     figureModificationCount: Long = 0L,
     rotationAllowed: Boolean = true,
+    onionSkinLayers: List<OnionSkinLayer> = emptyList(),
     onCanvasStateChange: (CanvasState) -> Unit = {},
     onViewportChanged: (Viewport) -> Unit = {},
     onJointAngleChanged: (figure: Figure, joint: Joint, newAngle: Float) -> Unit = { _, _, _ -> },
@@ -119,7 +129,14 @@ fun InfiniteCanvas(
             // Draw viewport rectangle (camera frame)
             drawViewportRect(viewportRect)
 
-            // Draw figures
+            // Draw onion skin layers (previous/next frames at reduced opacity)
+            onionSkinLayers.forEach { layer ->
+                layer.compiledJoints.forEach { compiled ->
+                    drawCompiledJoint(compiled, layer.color.copy(alpha = layer.alpha), 4f)
+                }
+            }
+
+            // Draw figures (current frame)
             compiledJointsForDrawing.forEach { compiled ->
                 drawCompiledJoint(compiled, Color.Black, 4f)
             }
