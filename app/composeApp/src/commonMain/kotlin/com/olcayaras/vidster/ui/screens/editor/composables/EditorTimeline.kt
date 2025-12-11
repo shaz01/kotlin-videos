@@ -3,12 +3,7 @@ package com.olcayaras.vidster.ui.screens.editor.composables
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
@@ -32,8 +27,8 @@ import com.olcayaras.figures.getMockSegmentFrame
 import com.olcayaras.vidster.ui.theme.AppTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-private val innerRadius = RoundedCornerShape(16.dp)
-private val outerRadius = RoundedCornerShape(24.dp)
+
+val frameShape = RoundedCornerShape(8.dp)
 
 @Composable
 fun EditorTimelineRow(
@@ -45,8 +40,8 @@ fun EditorTimelineRow(
     innerPadding: Dp = 0.dp
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = 0.9f),
-        modifier = modifier.clip(outerRadius).border(1.dp, MaterialTheme.colorScheme.outlineVariant, outerRadius)
+        color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.95f),
+        modifier = modifier
     ) {
         LazyRow(contentPadding = PaddingValues(innerPadding)) {
             editorTimelineContent(
@@ -69,8 +64,8 @@ fun EditorTimelineColumn(
     innerPadding: Dp = 0.dp
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = 0.9f),
-        modifier = modifier.clip(outerRadius).border(1.dp, MaterialTheme.colorScheme.outlineVariant, outerRadius)
+        color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.95f),
+        modifier = modifier
     ) {
         LazyColumn(contentPadding = PaddingValues(innerPadding)) {
             editorTimelineContent(
@@ -93,7 +88,7 @@ fun LazyListScope.editorTimelineContent(
 ) {
     itemsIndexed(frames) { index, frame ->
         EditorTimelineFrame(
-            modifier = Modifier.width(128.dp),
+            modifier = Modifier.fillMaxWidth(),
             selected = frame === selectedFrame,
             onClick = { onClick(frame) },
             segmentFrame = frame,
@@ -116,16 +111,15 @@ private fun EditorTimelineFrame(
     Column(
         modifier = modifier
             .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
-            .clip(innerRadius)
             .background(if (selected) MaterialTheme.colorScheme.surface else Color.Transparent)
             .padding(8.dp)
     ) {
         SegmentFrameCanvas(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(4.dp))
-                .background(backgroundColor)
-                .border(2.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(4.dp)),
+                .clip(frameShape)
+                .background(backgroundColor, frameShape)
+                .border(2.dp, MaterialTheme.colorScheme.outlineVariant, frameShape),
             frame = segmentFrame,
             viewportSize = viewportSize
         )
