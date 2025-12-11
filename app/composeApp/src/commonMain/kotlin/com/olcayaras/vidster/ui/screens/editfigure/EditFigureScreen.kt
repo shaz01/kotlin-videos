@@ -146,13 +146,12 @@ fun EditFigureScreen(
                 color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.95f)
             ) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
+                    modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     // Joint properties
                     JointPropertiesPanel(
+                        modifier = Modifier.padding(horizontal = 16.dp),
                         selectedJoint = model.selectedJoint,
                         onUpdateId = { take(EditFigureEvent.UpdateJointId(it)) },
                         onUpdateLength = { take(EditFigureEvent.UpdateJointLength(it)) },
@@ -163,7 +162,7 @@ fun EditFigureScreen(
                         canDelete = model.canDeleteSelectedJoint
                     )
 
-                    HorizontalDivider()
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
 
                     // Templates
                     TemplatesPicker(

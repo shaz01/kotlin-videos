@@ -17,6 +17,7 @@ import kotlin.math.PI
  */
 @Composable
 fun JointPropertiesPanel(
+    modifier: Modifier = Modifier,
     selectedJoint: Joint?,
     onUpdateId: (String) -> Unit,
     onUpdateLength: (Float) -> Unit,
@@ -27,7 +28,7 @@ fun JointPropertiesPanel(
     canDelete: Boolean
 ) {
     Column(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text("Joint Properties", style = MaterialTheme.typography.titleMedium)

@@ -7,6 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.olcayaras.vidster.ui.screens.editfigure.FigureTemplate
 import compose.icons.FeatherIcons
@@ -20,7 +21,8 @@ import compose.icons.feathericons.ChevronRight
 fun TemplatesPicker(
     expanded: Boolean,
     onToggleExpanded: () -> Unit,
-    onTemplateSelected: (FigureTemplate) -> Unit
+    onTemplateSelected: (FigureTemplate) -> Unit,
+    horizontalPadding: Dp = 16.dp,
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         // Header
@@ -28,7 +30,10 @@ fun TemplatesPicker(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable { onToggleExpanded() }
-                .padding(vertical = 8.dp),
+                .padding(
+                    vertical = 8.dp,
+                    horizontal = horizontalPadding,
+                ),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -43,7 +48,9 @@ fun TemplatesPicker(
         // Template list
         AnimatedVisibility(visible = expanded) {
             Column(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = horizontalPadding),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 FigureTemplate.entries.forEach { template ->
