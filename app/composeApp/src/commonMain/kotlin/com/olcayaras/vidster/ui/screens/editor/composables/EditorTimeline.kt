@@ -3,17 +3,11 @@ package com.olcayaras.vidster.ui.screens.editor.composables
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -33,8 +27,8 @@ import com.olcayaras.figures.getMockSegmentFrame
 import com.olcayaras.vidster.ui.theme.AppTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-private val innerRadius = RectangleShape
-private val outerRadius = RectangleShape
+
+val frameShape = RoundedCornerShape(8.dp)
 
 @Composable
 fun EditorTimelineRow(
@@ -47,7 +41,7 @@ fun EditorTimelineRow(
 ) {
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.95f),
-        modifier = modifier.clip(outerRadius)
+        modifier = modifier
     ) {
         LazyRow(contentPadding = PaddingValues(innerPadding)) {
             editorTimelineContent(
@@ -71,7 +65,7 @@ fun EditorTimelineColumn(
 ) {
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.95f),
-        modifier = modifier.clip(outerRadius)
+        modifier = modifier
     ) {
         LazyColumn(contentPadding = PaddingValues(innerPadding)) {
             editorTimelineContent(
@@ -117,16 +111,15 @@ private fun EditorTimelineFrame(
     Column(
         modifier = modifier
             .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
-            .clip(innerRadius)
             .background(if (selected) MaterialTheme.colorScheme.surface else Color.Transparent)
             .padding(8.dp)
     ) {
         SegmentFrameCanvas(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(4.dp))
-                .background(backgroundColor)
-                .border(2.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(4.dp)),
+                .clip(frameShape)
+                .background(backgroundColor, frameShape)
+                .border(2.dp, MaterialTheme.colorScheme.outlineVariant, frameShape),
             frame = segmentFrame,
             viewportSize = viewportSize
         )
