@@ -122,7 +122,6 @@ fun EditorScreen(
     var hasInitializedOffset by remember { mutableStateOf(false) }
     LaunchedEffect(timelineWidth, toolbarHeight, propertiesPanelLeft, canvasSize) {
         if (canvasSize != IntSize.Zero && !hasInitializedOffset) {
-            @Suppress("AssignedValueIsNeverRead") // ide bug
             hasInitializedOffset = true
             resetViewportToCenter()
         }

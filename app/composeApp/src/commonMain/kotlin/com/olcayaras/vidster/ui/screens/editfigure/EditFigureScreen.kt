@@ -94,7 +94,6 @@ fun EditFigureScreen(
             calculateFigureCenteredState(canvasSize, model.compiledJoints)?.let {
                 take(EditFigureEvent.UpdateCanvasState(it))
             }
-            @Suppress("AssignedValueIsNeverRead") // ide bug
             hasInitializedOffset = true
         }
     }

@@ -74,19 +74,15 @@ fun VideoScreen(
         totalTimeSeconds = videoController.totalDuration.toLong(DurationUnit.SECONDS),
         onPlayPauseClick = {
             videoController.togglePlayPause()
-            @Suppress("AssignedValueIsNeverRead")
             interactionTrigger++
         },
         onSeek = { progress ->
             videoController.seekToProgress(progress)
-            @Suppress("AssignedValueIsNeverRead")
             interactionTrigger++
         },
         onExit = onExit,
         onToggleControls = {
-            @Suppress("AssignedValueIsNeverRead")
             controlsVisible = !controlsVisible
-            @Suppress("AssignedValueIsNeverRead")
             interactionTrigger++
         }
     ) {
