@@ -15,7 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.withTransform
-import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
@@ -56,24 +55,10 @@ fun FigureEditorCanvas(
     Canvas(
         modifier = modifier
             .background(Color.White)
-            // Scroll wheel zoom
-            .pointerInput(Unit) {
-                awaitPointerEventScope {
-                    while (true) {
-                        val event = awaitPointerEvent()
-                        if (event.type == PointerEventType.Scroll) {
-                            val scrollDelta = event.changes.first().scrollDelta
-                            val zoomFactor = if (scrollDelta.y > 0) 0.9f else 1.1f
-                            val position = event.changes.first().position
-                            currentOnCanvasStateChange(
-                                currentCanvasState.zoom(zoomFactor, position.x, position.y)
-                            )
-                            event.changes.forEach { it.consume() }
-                        }
-                    }
-                }
-            }
-            // Touch/click gestures
+            .scrollWheelZoom(
+                getCanvasState = { currentCanvasState },
+                onCanvasStateChange = currentOnCanvasStateChange
+            )
             .pointerInput(Unit) {
                 awaitEachGesture {
                     val firstDown = awaitFirstDown(requireUnconsumed = false)

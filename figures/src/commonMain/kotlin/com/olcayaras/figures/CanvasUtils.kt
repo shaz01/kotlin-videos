@@ -3,12 +3,15 @@ package com.olcayaras.figures
 import androidx.compose.foundation.gestures.calculateCentroid
 import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateZoom
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.PointerEvent
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.pointerInput
 import kotlin.math.abs
 import kotlin.math.sqrt
 
@@ -162,6 +165,27 @@ fun findHitSegment(
 // =============================================================================
 // Gesture Handling
 // =============================================================================
+
+/** Modifier for scroll wheel zoom (desktop). */
+fun Modifier.scrollWheelZoom(
+    getCanvasState: () -> CanvasState,
+    onCanvasStateChange: (CanvasState) -> Unit
+): Modifier = pointerInput(Unit) {
+    awaitPointerEventScope {
+        while (true) {
+            val event = awaitPointerEvent()
+            if (event.type == PointerEventType.Scroll) {
+                val scrollDelta = event.changes.first().scrollDelta
+                val zoomFactor = if (scrollDelta.y > 0) 0.9f else 1.1f
+                val position = event.changes.first().position
+                onCanvasStateChange(
+                    getCanvasState().zoom(zoomFactor, position.x, position.y)
+                )
+                event.changes.forEach { it.consume() }
+            }
+        }
+    }
+}
 
 /** Handles two-finger gestures: pinch to zoom, drag to pan. */
 fun handleMultiTouch(
