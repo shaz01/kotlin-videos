@@ -4,9 +4,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.calculateCentroid
-import androidx.compose.foundation.gestures.calculatePan
-import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -17,21 +14,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
-import androidx.compose.ui.input.pointer.PointerEvent
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
 import com.olcayaras.figures.*
 import kotlin.math.atan2
-import kotlin.math.sqrt
-
-private const val JOINT_HIT_RADIUS = 48f
-private const val SEGMENT_HIT_DISTANCE = 20f
 
 /**
  * Canvas for editing a single figure with selection support.
@@ -190,26 +179,6 @@ private fun findDragTarget(
     return null
 }
 
-private fun handleMultiTouch(
-    event: PointerEvent,
-    canvasState: CanvasState,
-    onCanvasStateChange: (CanvasState) -> Unit
-) {
-    val zoom = event.calculateZoom()
-    val pan = event.calculatePan()
-    val centroid = event.calculateCentroid()
-
-    if (zoom != 1f || pan != Offset.Zero) {
-        var newState = canvasState.pan(pan.x, pan.y)
-        if (zoom != 1f) {
-            newState = newState.zoom(zoom, centroid.x, centroid.y)
-        }
-        onCanvasStateChange(newState)
-    }
-
-    event.changes.forEach { it.consume() }
-}
-
 private fun handleSingleTouch(
     change: PointerInputChange,
     dragTarget: DragTarget?,
@@ -244,142 +213,4 @@ private fun handleSingleTouch(
             change.consume()
         }
     }
-}
-
-private fun DrawScope.drawCompiledJoint(
-    compiled: CompiledJoint,
-    color: Color,
-    thickness: Float
-) {
-    if (compiled.joint.length <= 0f) return
-
-    val start = Offset(compiled.startX, compiled.startY)
-    val end = Offset(compiled.endX, compiled.endY)
-
-    val worldAngle = compiled.parentWorldAngle + compiled.joint.angle
-
-    when (compiled.joint.type) {
-        SegmentType.Line -> {
-            drawLine(color = color, start = start, end = end, strokeWidth = thickness, cap = StrokeCap.Round)
-        }
-        SegmentType.Circle -> {
-            drawCircle(
-                color = color,
-                radius = compiled.radius,
-                center = Offset(compiled.centerX, compiled.centerY),
-                style = Stroke(width = thickness)
-            )
-        }
-        SegmentType.FilledCircle -> {
-            drawCircle(
-                color = color,
-                radius = compiled.radius,
-                center = Offset(compiled.centerX, compiled.centerY)
-            )
-        }
-        SegmentType.Rectangle -> {
-            drawRectangleShape(
-                color = color,
-                length = compiled.joint.length,
-                angle = worldAngle,
-                startX = compiled.startX,
-                startY = compiled.startY,
-                endX = compiled.endX,
-                endY = compiled.endY
-            )
-        }
-        is SegmentType.Ellipse -> {
-            val ellipseType = compiled.joint.type as SegmentType.Ellipse
-            drawEllipseShape(
-                color = color,
-                thickness = thickness,
-                length = compiled.joint.length,
-                widthRatio = ellipseType.widthRatio,
-                angle = worldAngle,
-                centerX = compiled.centerX,
-                centerY = compiled.centerY
-            )
-        }
-        is SegmentType.Arc -> {
-            val arcType = compiled.joint.type as SegmentType.Arc
-            drawArcShape(
-                color = color,
-                thickness = thickness,
-                length = compiled.joint.length,
-                sweepAngle = arcType.sweepAngle,
-                angle = worldAngle,
-                centerX = compiled.centerX,
-                centerY = compiled.centerY
-            )
-        }
-    }
-
-    // Joint dot at start
-    drawCircle(color = color, radius = thickness, center = start)
-}
-
-private fun findHitJoint(
-    compiledJoints: List<CompiledJoint>,
-    canvasX: Float,
-    canvasY: Float,
-    scale: Float
-): CompiledJoint? {
-    val hitRadius = JOINT_HIT_RADIUS / scale
-
-    return compiledJoints
-        .filter { it.joint.length > 0f }
-        .minByOrNull { distanceTo(canvasX, canvasY, it.endX, it.endY) }
-        ?.takeIf { distanceTo(canvasX, canvasY, it.endX, it.endY) <= hitRadius }
-}
-
-private fun findHitSegment(
-    compiledJoints: List<CompiledJoint>,
-    canvasX: Float,
-    canvasY: Float,
-    scale: Float
-): CompiledJoint? {
-    val hitDistance = SEGMENT_HIT_DISTANCE / scale
-
-    return compiledJoints
-        .asSequence()
-        .filter { it.joint.length > 0f }
-        .associateWith { compiled ->
-            when (compiled.joint.type) {
-                SegmentType.Line -> {
-                    pointToSegmentDistance(canvasX, canvasY, compiled.startX, compiled.startY, compiled.endX, compiled.endY)
-                }
-                SegmentType.Circle, SegmentType.FilledCircle, is SegmentType.Arc, is SegmentType.Ellipse -> {
-                    val distToCenter = distanceTo(canvasX, canvasY, compiled.centerX, compiled.centerY)
-                    if (distToCenter <= compiled.radius) 0f else distToCenter - compiled.radius
-                }
-                SegmentType.Rectangle -> {
-                    val distToCenter = distanceTo(canvasX, canvasY, compiled.centerX, compiled.centerY)
-                    if (distToCenter <= compiled.joint.length / 2) 0f else distToCenter - compiled.joint.length / 2
-                }
-            }
-        }
-        .minByOrNull { it.value }
-        ?.takeIf { it.value <= hitDistance }
-        ?.key
-}
-
-private fun distanceTo(x1: Float, y1: Float, x2: Float, y2: Float): Float {
-    val dx = x2 - x1
-    val dy = y2 - y1
-    return sqrt(dx * dx + dy * dy)
-}
-
-private fun pointToSegmentDistance(
-    px: Float, py: Float,
-    x1: Float, y1: Float,
-    x2: Float, y2: Float
-): Float {
-    val dx = x2 - x1
-    val dy = y2 - y1
-    val lengthSquared = dx * dx + dy * dy
-
-    if (lengthSquared == 0f) return distanceTo(px, py, x1, y1)
-
-    val t = (((px - x1) * dx + (py - y1) * dy) / lengthSquared).coerceIn(0f, 1f)
-    return distanceTo(px, py, x1 + t * dx, y1 + t * dy)
 }
