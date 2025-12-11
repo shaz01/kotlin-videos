@@ -23,6 +23,7 @@ import com.olcayaras.vidster.ui.screens.editfigure.composables.TemplatesPicker
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Check
+import compose.icons.feathericons.Edit2
 
 /**
  * Calculates canvas state to center and fit a figure within the available space.
@@ -209,11 +210,19 @@ private fun EditFigureToolbar(
             OutlinedTextField(
                 value = figureName,
                 onValueChange = onNameChange,
-                modifier = Modifier.width(200.dp),
+                modifier = Modifier.width(220.dp),
                 singleLine = true,
                 textStyle = MaterialTheme.typography.titleMedium,
+                trailingIcon = {
+                    Icon(
+                        FeatherIcons.Edit2,
+                        contentDescription = "Edit name",
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                    )
+                },
                 colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedBorderColor = Color.Transparent,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
                     focusedBorderColor = MaterialTheme.colorScheme.primary
                 )
             )
