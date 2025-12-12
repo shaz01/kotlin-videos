@@ -31,10 +31,10 @@ import com.olcayaras.figures.*
 import com.olcayaras.vidster.ui.screens.editor.composables.EditorSheetContainer
 import com.olcayaras.vidster.ui.screens.editor.composables.EditorTimelineColumn
 import com.olcayaras.vidster.ui.screens.editor.composables.EditorToolbar
+import com.olcayaras.vidster.ui.screens.editor.composables.OnionSkinModePicker
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Crosshair
 import compose.icons.feathericons.Edit2
-import compose.icons.feathericons.Layers
 import compose.icons.feathericons.Play
 import compose.icons.feathericons.Plus
 import compose.icons.feathericons.User
@@ -249,17 +249,11 @@ fun EditorScreen(
                     IconButton(onClick = ::resetViewportToCenter) {
                         Icon(FeatherIcons.Crosshair, contentDescription = "Reset View")
                     }
-                    // Onion skin toggle
-                    IconButton(onClick = { take(EditorEvent.ToggleOnionSkin) }) {
-                        Icon(
-                            FeatherIcons.Layers,
-                            contentDescription = "Toggle Onion Skin",
-                            tint = if (model.onionSkinEnabled)
-                                MaterialTheme.colorScheme.primary
-                            else
-                                LocalContentColor.current
-                        )
-                    }
+                    // Onion skin mode picker
+                    OnionSkinModePicker(
+                        selectedMode = model.onionSkinMode,
+                        onModeSelected = { take(EditorEvent.SetOnionSkinMode(it)) }
+                    )
                 }
             }
 
