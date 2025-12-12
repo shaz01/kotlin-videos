@@ -31,6 +31,7 @@ import com.olcayaras.figures.*
 import com.olcayaras.vidster.ui.screens.editor.composables.EditorSheetContainer
 import com.olcayaras.vidster.ui.screens.editor.composables.EditorTimelineColumn
 import com.olcayaras.vidster.ui.screens.editor.composables.EditorToolbar
+import com.olcayaras.vidster.ui.screens.editor.composables.OnionSkinModePicker
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Crosshair
 import compose.icons.feathericons.Edit2
@@ -133,6 +134,17 @@ fun EditorScreen(
             .background(Color.White)
             .onGloballyPositioned { canvasSize = it.size }
     ) {
+        // Convert onion skin frames to layers with colors
+        val onionSkinLayers = remember(model.onionSkinFrames) {
+            model.onionSkinFrames.map { frame ->
+                OnionSkinLayer(
+                    compiledJoints = frame.compiledJoints,
+                    alpha = frame.alpha,
+                    color = if (frame.isPrevious) Color.Red else Color.Blue
+                )
+            }
+        }
+
         // Canvas layer (background) - Interactive infinite canvas
         InfiniteCanvas(
             modifier = Modifier.fillMaxSize(),
@@ -142,6 +154,7 @@ fun EditorScreen(
             screenSize = model.screenSize,
             figureModificationCount = model.figureModificationCount,
             rotationAllowed = true,
+            onionSkinLayers = onionSkinLayers,
             onCanvasStateChange = { take(EditorEvent.UpdateCanvasState(it)) },
             onViewportChanged = { take(EditorEvent.UpdateViewport(it)) },
             onJointAngleChanged = { figure, joint, angle ->
@@ -236,6 +249,11 @@ fun EditorScreen(
                     IconButton(onClick = ::resetViewportToCenter) {
                         Icon(FeatherIcons.Crosshair, contentDescription = "Reset View")
                     }
+                    // Onion skin mode picker
+                    OnionSkinModePicker(
+                        selectedMode = model.onionSkinMode,
+                        onModeSelected = { take(EditorEvent.SetOnionSkinMode(it)) }
+                    )
                 }
             }
 

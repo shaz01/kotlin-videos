@@ -12,16 +12,25 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import com.olcayaras.vidster.ViewModel
 import com.olcayaras.figures.CanvasState
+import com.olcayaras.figures.CompiledJoint
 import com.olcayaras.figures.Figure
 import com.olcayaras.figures.FigureFrame
 import com.olcayaras.figures.Joint
 import com.olcayaras.figures.SegmentFrame
 import com.olcayaras.figures.Viewport
+import com.olcayaras.figures.compileForEditing
 import com.olcayaras.figures.deepCopy
 import com.olcayaras.figures.getMockFigure
 import com.olcayaras.figures.getMockShapesDemo
 import com.olcayaras.vidster.ui.Route
 import io.github.aakira.napier.Napier
+
+enum class OnionSkinMode {
+    Disabled,
+    Previous,
+    Future,
+    Both
+}
 
 sealed interface EditorEvent {
     // Frame management
@@ -45,14 +54,30 @@ sealed interface EditorEvent {
 
     // Playback
     data object PlayAnimation : EditorEvent
+
+    // Onion skinning
+    data class SetOnionSkinMode(val mode: OnionSkinMode) : EditorEvent
 }
+
+/**
+ * Represents a frame to be rendered as onion skin with a specific opacity.
+ * @param isPrevious true for previous frames (shown in red), false for next frames (shown in blue)
+ */
+data class OnionSkinFrame(
+    val compiledJoints: List<CompiledJoint>,
+    val alpha: Float,
+    val isPrevious: Boolean
+)
 
 data class EditorState(
     val frames: List<FigureFrame>,
     val selectedFrameIndex: Int,
     val canvasState: CanvasState,
     val figureModificationCount: Long = 0L,
-    val screenSize: IntSize = IntSize(1920, 1080)
+    val screenSize: IntSize = IntSize(1920, 1080),
+    val onionSkinMode: OnionSkinMode = OnionSkinMode.Disabled,
+    val onionSkinPreviousCount: Int = 2,
+    val onionSkinNextCount: Int = 1
 ) {
     val selectedFrame: FigureFrame get() {
         val frame = frames.getOrNull(selectedFrameIndex) ?: frames.lastOrNull() ?: throw IllegalStateException("No frames: ${frames.size}, selected index: $selectedFrameIndex, $frames")
@@ -66,6 +91,46 @@ data class EditorState(
 
     // Compile all frames for timeline thumbnails
     val segmentFrames: List<SegmentFrame> = frames.map { it.compile() }
+
+    /**
+     * Computes onion skin frames with decreasing opacity.
+     * Previous frames are shown in red tint, next frames in blue tint.
+     */
+    val onionSkinFrames: List<OnionSkinFrame> get() {
+        if (onionSkinMode == OnionSkinMode.Disabled) return emptyList()
+
+        val result = mutableListOf<OnionSkinFrame>()
+        val showPrevious = onionSkinMode == OnionSkinMode.Previous || onionSkinMode == OnionSkinMode.Both
+        val showFuture = onionSkinMode == OnionSkinMode.Future || onionSkinMode == OnionSkinMode.Both
+
+        // Previous frames (closer frames have higher opacity)
+        if (showPrevious) {
+            for (i in 1..onionSkinPreviousCount) {
+                val frameIndex = selectedFrameIndex - i
+                if (frameIndex >= 0) {
+                    val frame = frames[frameIndex]
+                    val alpha = 0.4f * (1f - (i - 1).toFloat() / onionSkinPreviousCount)
+                    val compiledJoints = frame.figures.flatMap { it.compileForEditing() }
+                    result.add(OnionSkinFrame(compiledJoints, alpha, isPrevious = true))
+                }
+            }
+        }
+
+        // Next frames (closer frames have higher opacity)
+        if (showFuture) {
+            for (i in 1..onionSkinNextCount) {
+                val frameIndex = selectedFrameIndex + i
+                if (frameIndex < frames.size) {
+                    val frame = frames[frameIndex]
+                    val alpha = 0.4f * (1f - (i - 1).toFloat() / onionSkinNextCount)
+                    val compiledJoints = frame.figures.flatMap { it.compileForEditing() }
+                    result.add(OnionSkinFrame(compiledJoints, alpha, isPrevious = false))
+                }
+            }
+        }
+
+        return result
+    }
 }
 
 class EditorViewModel(
@@ -76,6 +141,7 @@ class EditorViewModel(
     private val _selectedFrameIndex = MutableStateFlow(0)
     private val _canvasState = MutableStateFlow(CanvasState())
     private val _figureModificationCount = MutableStateFlow(0L)
+    private val _onionSkinMode = MutableStateFlow(OnionSkinMode.Disabled)
 
     init {
         // Initialize with a single frame containing a mock figure
@@ -222,12 +288,17 @@ class EditorViewModel(
         _figureModificationCount.value++
     }
 
+    private fun setOnionSkinMode(mode: OnionSkinMode) {
+        _onionSkinMode.value = mode
+    }
+
     @Composable
     override fun models(events: Flow<EditorEvent>): EditorState {
         val frames by _frames.collectAsState()
         val selectedFrameIndex by _selectedFrameIndex.collectAsState()
         val canvasState by _canvasState.collectAsState()
         val figureModificationCount by _figureModificationCount.collectAsState()
+        val onionSkinMode by _onionSkinMode.collectAsState()
         val screenSize = IntSize(1920, 1080)
 
         LaunchedEffect(events) {
@@ -243,10 +314,18 @@ class EditorViewModel(
                     is EditorEvent.EditFigure -> editFigure(event.figureIndex)
                     is EditorEvent.AddNewFigure -> addNewFigure()
                     is EditorEvent.PlayAnimation -> playAnimation(screenSize)
+                    is EditorEvent.SetOnionSkinMode -> setOnionSkinMode(event.mode)
                 }
             }
         }
 
-        return EditorState(frames, selectedFrameIndex, canvasState, figureModificationCount, screenSize)
+        return EditorState(
+            frames = frames,
+            selectedFrameIndex = selectedFrameIndex,
+            canvasState = canvasState,
+            figureModificationCount = figureModificationCount,
+            screenSize = screenSize,
+            onionSkinMode = onionSkinMode
+        )
     }
 }
