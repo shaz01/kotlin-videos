@@ -1,6 +1,7 @@
 package com.olcayaras.vidster.ui.screens.editor
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -17,6 +18,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.isMetaPressed
+import androidx.compose.ui.input.key.isShiftPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
@@ -37,6 +46,8 @@ import compose.icons.feathericons.Crosshair
 import compose.icons.feathericons.Edit2
 import compose.icons.feathericons.Play
 import compose.icons.feathericons.Plus
+import compose.icons.feathericons.RotateCcw
+import compose.icons.feathericons.RotateCw
 import compose.icons.feathericons.User
 import io.github.aakira.napier.Napier
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -133,6 +144,23 @@ fun EditorScreen(
             .fillMaxSize()
             .background(Color.White)
             .onGloballyPositioned { canvasSize = it.size }
+            .onKeyEvent { keyEvent ->
+                if (keyEvent.type == KeyEventType.KeyDown) {
+                    val isCtrlOrCmd = keyEvent.isCtrlPressed || keyEvent.isMetaPressed
+                    when {
+                        isCtrlOrCmd && keyEvent.isShiftPressed && keyEvent.key == Key.Z -> {
+                            take(EditorEvent.Redo)
+                            true
+                        }
+                        isCtrlOrCmd && keyEvent.key == Key.Z -> {
+                            take(EditorEvent.Undo)
+                            true
+                        }
+                        else -> false
+                    }
+                } else false
+            }
+            .focusable()
     ) {
         // Convert onion skin frames to layers with colors
         val onionSkinLayers = remember(model.onionSkinFrames) {
@@ -156,9 +184,16 @@ fun EditorScreen(
             rotationAllowed = true,
             onionSkinLayers = onionSkinLayers,
             onCanvasStateChange = { take(EditorEvent.UpdateCanvasState(it)) },
+            onViewportDragStart = { take(EditorEvent.BeginViewportDrag) },
             onViewportChanged = { take(EditorEvent.UpdateViewport(it)) },
+            onJointDragStart = { figure, joint ->
+                take(EditorEvent.BeginJointDrag(figure, joint))
+            },
             onJointAngleChanged = { figure, joint, angle ->
                 take(EditorEvent.UpdateJointAngle(figure, joint, angle))
+            },
+            onFigureDragStart = { figure ->
+                take(EditorEvent.BeginFigureMove(figure))
             },
             onFigureMoved = { figure, newX, newY ->
                 take(EditorEvent.MoveFigure(figure, newX, newY))
@@ -254,6 +289,19 @@ fun EditorScreen(
                         selectedMode = model.onionSkinMode,
                         onModeSelected = { take(EditorEvent.SetOnionSkinMode(it)) }
                     )
+                    // Undo/Redo buttons
+                    IconButton(
+                        onClick = { take(EditorEvent.Undo) },
+                        enabled = model.canUndo
+                    ) {
+                        Icon(FeatherIcons.RotateCcw, contentDescription = "Undo")
+                    }
+                    IconButton(
+                        onClick = { take(EditorEvent.Redo) },
+                        enabled = model.canRedo
+                    ) {
+                        Icon(FeatherIcons.RotateCw, contentDescription = "Redo")
+                    }
                 }
             }
 

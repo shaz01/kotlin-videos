@@ -44,9 +44,12 @@ sealed interface EditorEvent {
     // Viewport operations
     data class UpdateViewport(val viewport: Viewport) : EditorEvent
 
-    // Figure editing
+    // Figure editing - Begin events push undo snapshot, Update events don't
+    data class BeginJointDrag(val figure: Figure, val joint: Joint) : EditorEvent
     data class UpdateJointAngle(val figure: Figure, val joint: Joint, val newAngle: Float) : EditorEvent
+    data class BeginFigureMove(val figure: Figure) : EditorEvent
     data class MoveFigure(val figure: Figure, val newX: Float, val newY: Float) : EditorEvent
+    data object BeginViewportDrag : EditorEvent
 
     // Figure management
     data class EditFigure(val figureIndex: Int) : EditorEvent
@@ -57,6 +60,10 @@ sealed interface EditorEvent {
 
     // Onion skinning
     data class SetOnionSkinMode(val mode: OnionSkinMode) : EditorEvent
+
+    // Undo/Redo
+    data object Undo : EditorEvent
+    data object Redo : EditorEvent
 }
 
 /**
@@ -77,7 +84,9 @@ data class EditorState(
     val screenSize: IntSize = IntSize(1920, 1080),
     val onionSkinMode: OnionSkinMode = OnionSkinMode.Disabled,
     val onionSkinPreviousCount: Int = 2,
-    val onionSkinNextCount: Int = 1
+    val onionSkinNextCount: Int = 1,
+    val canUndo: Boolean = false,
+    val canRedo: Boolean = false
 ) {
     val selectedFrame: FigureFrame get() {
         val frame = frames.getOrNull(selectedFrameIndex) ?: frames.lastOrNull() ?: throw IllegalStateException("No frames: ${frames.size}, selected index: $selectedFrameIndex, $frames")
@@ -143,6 +152,11 @@ class EditorViewModel(
     private val _figureModificationCount = MutableStateFlow(0L)
     private val _onionSkinMode = MutableStateFlow(OnionSkinMode.Disabled)
 
+    // Undo/Redo history stacks
+    private val _undoStack = MutableStateFlow<List<List<FigureFrame>>>(emptyList())
+    private val _redoStack = MutableStateFlow<List<List<FigureFrame>>>(emptyList())
+    private val maxHistorySize = 50
+
     init {
         // Initialize with a single frame containing a mock figure
         val initialFrame = FigureFrame(
@@ -164,6 +178,7 @@ class EditorViewModel(
     }
 
     private fun addFrame() {
+        pushUndoSnapshot()
         // Clone the current frame or create a new one
         val currentFrame = _frames.value.getOrNull(_selectedFrameIndex.value)
         val newFrame = currentFrame?.deepCopy()
@@ -180,6 +195,7 @@ class EditorViewModel(
     private fun removeFrame(index: Int) {
         if (_frames.value.size <= 1) return // Keep at least one frame
 
+        pushUndoSnapshot()
         val newFrames = _frames.value.toMutableList()
         newFrames.removeAt(index)
         _frames.value = newFrames
@@ -196,6 +212,7 @@ class EditorViewModel(
 
     private fun updateJointAngle(joint: Joint, newAngle: Float) {
         // Update the joint's angle directly (Joint has mutable angle)
+        // Note: Snapshot is pushed in beginJointDrag(), not here
         joint.angle = newAngle
 
         // Increment modification count to trigger recomposition
@@ -204,6 +221,7 @@ class EditorViewModel(
 
     private fun moveFigure(figure: Figure, newX: Float, newY: Float) {
         // Update figure position directly (Figure has mutable x/y)
+        // Note: Snapshot is pushed in beginFigureMove(), not here
         figure.x = newX
         figure.y = newY
 
@@ -213,6 +231,7 @@ class EditorViewModel(
 
     private fun updateViewport(viewport: Viewport) {
         // Update the selected frame's viewport
+        // Note: Snapshot is pushed in beginViewportDrag(), not here
         val frameIndex = _selectedFrameIndex.value
         val currentFrames = _frames.value.toMutableList()
         if (frameIndex in currentFrames.indices) {
@@ -265,6 +284,7 @@ class EditorViewModel(
         val currentFrames = _frames.value.toMutableList()
         if (frameIndex !in currentFrames.indices) return
 
+        pushUndoSnapshot()
         val frame = currentFrames[frameIndex]
         val newFigures = frame.figures.toMutableList()
         if (figureIndex in newFigures.indices) {
@@ -280,6 +300,7 @@ class EditorViewModel(
         val currentFrames = _frames.value.toMutableList()
         if (frameIndex !in currentFrames.indices) return
 
+        pushUndoSnapshot()
         val frame = currentFrames[frameIndex]
         val newFigures = frame.figures.toMutableList()
         newFigures.add(figure)
@@ -292,6 +313,71 @@ class EditorViewModel(
         _onionSkinMode.value = mode
     }
 
+    // Drag start handlers - push snapshot once at the start of a drag operation
+    private fun beginJointDrag() {
+        pushUndoSnapshot()
+    }
+
+    private fun beginFigureMove() {
+        pushUndoSnapshot()
+    }
+
+    private fun beginViewportDrag() {
+        pushUndoSnapshot()
+    }
+
+    // Undo/Redo helper functions
+
+    private fun pushUndoSnapshot() {
+        val snapshot = _frames.value.map { it.deepCopy() }
+        _undoStack.value = (_undoStack.value + listOf(snapshot)).takeLast(maxHistorySize)
+        _redoStack.value = emptyList() // Clear redo on new action
+    }
+
+    private fun undo() {
+        val undoStack = _undoStack.value
+        if (undoStack.isEmpty()) return
+
+        // Push current state to redo
+        val currentSnapshot = _frames.value.map { it.deepCopy() }
+        _redoStack.value = _redoStack.value + listOf(currentSnapshot)
+
+        // Restore previous state
+        val previousState = undoStack.last()
+        _undoStack.value = undoStack.dropLast(1)
+        _frames.value = previousState
+
+        // Adjust selection if needed
+        if (_selectedFrameIndex.value >= _frames.value.size) {
+            _selectedFrameIndex.value = _frames.value.lastIndex.coerceAtLeast(0)
+        }
+
+        // Increment modification count to trigger recomposition
+        _figureModificationCount.value++
+    }
+
+    private fun redo() {
+        val redoStack = _redoStack.value
+        if (redoStack.isEmpty()) return
+
+        // Push current state to undo
+        val currentSnapshot = _frames.value.map { it.deepCopy() }
+        _undoStack.value = _undoStack.value + listOf(currentSnapshot)
+
+        // Restore next state
+        val nextState = redoStack.last()
+        _redoStack.value = redoStack.dropLast(1)
+        _frames.value = nextState
+
+        // Adjust selection if needed
+        if (_selectedFrameIndex.value >= _frames.value.size) {
+            _selectedFrameIndex.value = _frames.value.lastIndex.coerceAtLeast(0)
+        }
+
+        // Increment modification count to trigger recomposition
+        _figureModificationCount.value++
+    }
+
     @Composable
     override fun models(events: Flow<EditorEvent>): EditorState {
         val frames by _frames.collectAsState()
@@ -299,6 +385,8 @@ class EditorViewModel(
         val canvasState by _canvasState.collectAsState()
         val figureModificationCount by _figureModificationCount.collectAsState()
         val onionSkinMode by _onionSkinMode.collectAsState()
+        val undoStack by _undoStack.collectAsState()
+        val redoStack by _redoStack.collectAsState()
         val screenSize = IntSize(1920, 1080)
 
         LaunchedEffect(events) {
@@ -308,13 +396,18 @@ class EditorViewModel(
                     is EditorEvent.AddFrame -> addFrame()
                     is EditorEvent.RemoveFrame -> removeFrame(event.index)
                     is EditorEvent.UpdateCanvasState -> updateCanvasState(event.canvasState)
+                    is EditorEvent.BeginViewportDrag -> beginViewportDrag()
                     is EditorEvent.UpdateViewport -> updateViewport(event.viewport)
+                    is EditorEvent.BeginJointDrag -> beginJointDrag()
                     is EditorEvent.UpdateJointAngle -> updateJointAngle(event.joint, event.newAngle)
+                    is EditorEvent.BeginFigureMove -> beginFigureMove()
                     is EditorEvent.MoveFigure -> moveFigure(event.figure, event.newX, event.newY)
                     is EditorEvent.EditFigure -> editFigure(event.figureIndex)
                     is EditorEvent.AddNewFigure -> addNewFigure()
                     is EditorEvent.PlayAnimation -> playAnimation(screenSize)
                     is EditorEvent.SetOnionSkinMode -> setOnionSkinMode(event.mode)
+                    is EditorEvent.Undo -> undo()
+                    is EditorEvent.Redo -> redo()
                 }
             }
         }
@@ -325,7 +418,9 @@ class EditorViewModel(
             canvasState = canvasState,
             figureModificationCount = figureModificationCount,
             screenSize = screenSize,
-            onionSkinMode = onionSkinMode
+            onionSkinMode = onionSkinMode,
+            canUndo = undoStack.isNotEmpty(),
+            canRedo = redoStack.isNotEmpty()
         )
     }
 }
