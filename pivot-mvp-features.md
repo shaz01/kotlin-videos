@@ -77,9 +77,9 @@ The AI agent can provide unique value in these areas:
 
 ## Week 2 Milestones
 
-- [ ] Onion skinning toggle
+- [X] Onion skinning toggle
 - [ ] Linear inbetweening
 - [ ] Koog agent integration (at least one feature)
-- [ ] Undo/redo stack
-- [ ] Multiple figures support
+- [X] Undo/redo stack
+- [X] Multiple figures support
 - [ ] Polish and demo preparation

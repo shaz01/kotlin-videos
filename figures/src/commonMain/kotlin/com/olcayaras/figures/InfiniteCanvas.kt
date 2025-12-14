@@ -53,8 +53,11 @@ fun InfiniteCanvas(
     onionSkinLayers: List<OnionSkinLayer> = emptyList(),
     onCanvasStateChange: (CanvasState) -> Unit = {},
     onViewportChanged: (Viewport) -> Unit = {},
+    onJointDragStart: (figure: Figure, joint: Joint) -> Unit = { _, _ -> },
     onJointAngleChanged: (figure: Figure, joint: Joint, newAngle: Float) -> Unit = { _, _, _ -> },
-    onFigureMoved: (figure: Figure, newX: Float, newY: Float) -> Unit = { _, _, _ -> }
+    onFigureDragStart: (figure: Figure) -> Unit = { _ -> },
+    onFigureMoved: (figure: Figure, newX: Float, newY: Float) -> Unit = { _, _, _ -> },
+    onViewportDragStart: () -> Unit = {}
 ) {
     // Store compiled joints in state - this triggers redraw when updated
     var compiledJointsForDrawing by remember {
@@ -71,8 +74,11 @@ fun InfiniteCanvas(
     val currentViewport by rememberUpdatedState(viewport)
     val currentOnCanvasStateChange by rememberUpdatedState(onCanvasStateChange)
     val currentOnViewportChanged by rememberUpdatedState(onViewportChanged)
+    val currentOnJointDragStart by rememberUpdatedState(onJointDragStart)
     val currentOnJointAngleChanged by rememberUpdatedState(onJointAngleChanged)
+    val currentOnFigureDragStart by rememberUpdatedState(onFigureDragStart)
     val currentOnFigureMoved by rememberUpdatedState(onFigureMoved)
+    val currentOnViewportDragStart by rememberUpdatedState(onViewportDragStart)
 
     val viewportRect by rememberUpdatedState(Rect(offset = viewport.topLeft, size = screenSize.toSize()))
 
@@ -95,6 +101,20 @@ fun InfiniteCanvas(
                         rotationAllowed = rotationAllowed,
                         viewportRect = viewportRect
                     )
+
+                    // Notify drag start
+                    when (dragTarget) {
+                        is DragTarget.JointRotation -> {
+                            currentOnJointDragStart(dragTarget.compiledJoint.figure, dragTarget.compiledJoint.joint)
+                        }
+                        is DragTarget.FigureMove -> {
+                            currentOnFigureDragStart(dragTarget.figure)
+                        }
+                        is DragTarget.ViewportMove -> {
+                            currentOnViewportDragStart()
+                        }
+                        null -> { /* No drag target, canvas pan - no callback needed */ }
+                    }
 
                     // Process pointer events until all fingers are lifted
                     while (true) {
