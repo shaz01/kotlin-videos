@@ -48,7 +48,7 @@ fun InfiniteCanvas(
     figures: List<Figure>,
     canvasState: CanvasState,
     viewport: Viewport = Viewport(),
-    screenSize: IntSize = IntSize(1920, 1080),
+    viewportSize: IntSize,
     figureModificationCount: Long = 0L,
     rotationAllowed: Boolean = true,
     onionSkinLayers: List<OnionSkinLayer> = emptyList(),
@@ -81,7 +81,7 @@ fun InfiniteCanvas(
     val currentOnFigureMoved by rememberUpdatedState(onFigureMoved)
     val currentOnViewportDragStart by rememberUpdatedState(onViewportDragStart)
 
-    val viewportRect by rememberUpdatedState(Rect(offset = viewport.topLeft, size = screenSize.toSize()))
+    val viewportRect by rememberUpdatedState(Rect(offset = viewport.topLeft, size = viewportSize.toSize()))
 
     Canvas(
         modifier = modifier

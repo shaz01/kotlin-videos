@@ -124,7 +124,7 @@ fun EditorScreen(
             top = toolbarHeight,
             right = propertiesPanelLeft,
             viewport = model.selectedFrame.viewport,
-            viewportSize = model.screenSize
+            viewportSize = model.viewportSize
         )?.let {
             take(EditorEvent.UpdateCanvasState(it))
         } ?: Napier.e { "Failed to calculate centered offset" }
@@ -179,7 +179,7 @@ fun EditorScreen(
             figures = model.selectedFigures,
             canvasState = model.canvasState,
             viewport = model.selectedFrame.viewport,
-            screenSize = model.screenSize,
+            viewportSize = model.viewportSize,
             figureModificationCount = model.figureModificationCount,
             rotationAllowed = true,
             onionSkinLayers = onionSkinLayers,
@@ -226,7 +226,7 @@ fun EditorScreen(
                         }
                     },
                     selectedFrame = model.selectedSegmentFrame,
-                    screenSize = model.screenSize
+                    viewportSize = model.viewportSize
                 )
 
                 // Resize handle
@@ -377,7 +377,8 @@ fun EditorScreenPreview() {
         model = EditorState(
             frames = frames,
             selectedFrameIndex = 0,
-            canvasState = CanvasState()
+            canvasState = CanvasState(),
+            viewportSize = IntSize(1920, 1080)
         ),
         take = {}
     )

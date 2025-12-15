@@ -81,7 +81,7 @@ data class EditorState(
     val selectedFrameIndex: Int,
     val canvasState: CanvasState,
     val figureModificationCount: Long = 0L,
-    val screenSize: IntSize = IntSize(1920, 1080),
+    val viewportSize: IntSize,
     val onionSkinMode: OnionSkinMode = OnionSkinMode.Disabled,
     val onionSkinPreviousCount: Int = 2,
     val onionSkinNextCount: Int = 1,
@@ -417,7 +417,7 @@ class EditorViewModel(
             selectedFrameIndex = selectedFrameIndex,
             canvasState = canvasState,
             figureModificationCount = figureModificationCount,
-            screenSize = screenSize,
+            viewportSize = screenSize,
             onionSkinMode = onionSkinMode,
             canUndo = undoStack.isNotEmpty(),
             canRedo = redoStack.isNotEmpty()

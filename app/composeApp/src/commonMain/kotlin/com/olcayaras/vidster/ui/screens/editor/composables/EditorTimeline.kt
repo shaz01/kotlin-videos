@@ -36,7 +36,7 @@ fun EditorTimelineRow(
     frames: List<SegmentFrame>,
     onClick: (SegmentFrame) -> Unit,
     selectedFrame: SegmentFrame?,
-    screenSize: IntSize = IntSize(1920, 1080),
+    viewportSize: IntSize,
     innerPadding: Dp = 0.dp
 ) {
     Surface(
@@ -48,7 +48,7 @@ fun EditorTimelineRow(
                 frames = frames,
                 onClick = onClick,
                 selectedFrame = selectedFrame,
-                screenSize = screenSize
+                viewportSize = viewportSize
             )
         }
     }
@@ -60,7 +60,7 @@ fun EditorTimelineColumn(
     frames: List<SegmentFrame>,
     onClick: (SegmentFrame) -> Unit,
     selectedFrame: SegmentFrame?,
-    screenSize: IntSize = IntSize(1920, 1080),
+    viewportSize: IntSize,
     innerPadding: Dp = 0.dp
 ) {
     Surface(
@@ -72,7 +72,7 @@ fun EditorTimelineColumn(
                 frames = frames,
                 onClick = onClick,
                 selectedFrame = selectedFrame,
-                screenSize = screenSize
+                viewportSize = viewportSize
             )
         }
     }
@@ -84,7 +84,7 @@ fun LazyListScope.editorTimelineContent(
     frames: List<SegmentFrame>,
     onClick: (SegmentFrame) -> Unit,
     selectedFrame: SegmentFrame? = null,
-    screenSize: IntSize = IntSize(1920, 1080)
+    viewportSize: IntSize
 ) {
     itemsIndexed(frames) { index, frame ->
         EditorTimelineFrame(
@@ -92,7 +92,7 @@ fun LazyListScope.editorTimelineContent(
             selected = frame === selectedFrame,
             onClick = { onClick(frame) },
             segmentFrame = frame,
-            viewportSize = screenSize,
+            viewportSize = viewportSize,
             text = "Frame ${index + 1}"
         )
     }
@@ -104,7 +104,7 @@ private fun EditorTimelineFrame(
     selected: Boolean = false,
     onClick: (() -> Unit)? = null,
     segmentFrame: SegmentFrame,
-    viewportSize: IntSize = IntSize(1920, 1080),
+    viewportSize: IntSize,
     backgroundColor: Color = Color.White,
     text: String
 ) {
@@ -170,7 +170,8 @@ private fun EditorTimelineRowPreview() {
                 frames = frames,
                 onClick = {},
                 selectedFrame = frames[2],
-                innerPadding = 8.dp
+                innerPadding = 8.dp,
+                viewportSize = IntSize(1920, 1080)
             )
         }
     }
@@ -187,7 +188,8 @@ private fun EditorTimelineColumnPreview() {
                 frames = frames,
                 onClick = {},
                 selectedFrame = frames[2],
-                innerPadding = 8.dp
+                innerPadding = 8.dp,
+                viewportSize = IntSize(1920, 1080)
             )
         }
     }
