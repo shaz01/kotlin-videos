@@ -9,9 +9,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
@@ -156,7 +157,7 @@ fun InfiniteCanvas(
             scale(canvasState.scale, canvasState.scale, Offset.Zero)
         }) {
             // Draw dimmed overlay outside viewport to show camera view area
-            drawViewportOverlay(viewportRect)
+            drawViewportOverlay(viewportRect, canvasState)
 
             // Draw viewport rectangle border (camera frame)
             drawViewportRect(viewportRect, textStyle, textMeasurer)
@@ -190,37 +191,34 @@ fun InfiniteCanvas(
 }
 
 /** Draws a semi-transparent overlay outside the viewport to clearly show the camera view area. */
-private fun DrawScope.drawViewportOverlay(viewportRect: Rect) {
+private fun DrawScope.drawViewportOverlay(viewportRect: Rect, canvasState: CanvasState) {
     val overlayColor = Color.Black.copy(alpha = 0.4f)
-    val bigValue = 100000f  // Large enough to cover any reasonable canvas area
 
-    // Top overlay (above viewport)
-    drawRect(
-        color = overlayColor,
-        topLeft = Offset(-bigValue, -bigValue),
-        size = Size(bigValue * 2, viewportRect.top + bigValue)
-    )
+    // Calculate the visible canvas bounds from screen coordinates
+    // Screen corners (0,0) and (width, height) transformed to canvas space
+    val (left, top) = canvasState.screenToCanvas(0f, 0f)
+    val (right, bottom) = canvasState.screenToCanvas(size.width, size.height)
 
-    // Bottom overlay (below viewport)
-    drawRect(
-        color = overlayColor,
-        topLeft = Offset(-bigValue, viewportRect.bottom),
-        size = Size(bigValue * 2, bigValue)
-    )
+    // Use a single Path with EvenOdd fill to create a cutout effect
+    val path = Path().apply {
+        fillType = PathFillType.EvenOdd
 
-    // Left overlay (left of viewport, between top and bottom)
-    drawRect(
-        color = overlayColor,
-        topLeft = Offset(-bigValue, viewportRect.top),
-        size = Size(viewportRect.left + bigValue, viewportRect.height)
-    )
+        // Outer rectangle (covers only the visible canvas area)
+        moveTo(left, top)
+        lineTo(right, top)
+        lineTo(right, bottom)
+        lineTo(left, bottom)
+        close()
 
-    // Right overlay (right of viewport, between top and bottom)
-    drawRect(
-        color = overlayColor,
-        topLeft = Offset(viewportRect.right, viewportRect.top),
-        size = Size(bigValue, viewportRect.height)
-    )
+        // Inner rectangle (viewport cutout - drawn in opposite winding order)
+        moveTo(viewportRect.left, viewportRect.top)
+        lineTo(viewportRect.left, viewportRect.bottom)
+        lineTo(viewportRect.right, viewportRect.bottom)
+        lineTo(viewportRect.right, viewportRect.top)
+        close()
+    }
+
+    drawPath(path, overlayColor)
 }
 
 /** Draws the viewport rectangle showing the camera frame area. */
