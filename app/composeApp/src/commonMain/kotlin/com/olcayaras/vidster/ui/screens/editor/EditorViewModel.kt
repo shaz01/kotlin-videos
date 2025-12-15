@@ -340,7 +340,7 @@ class EditorViewModel(
 
         // Push current state to redo
         val currentSnapshot = _frames.value.map { it.deepCopy() }
-        _redoStack.value = _redoStack.value + listOf(currentSnapshot)
+        _redoStack.value += listOf(currentSnapshot)
 
         // Restore previous state
         val previousState = undoStack.last()
@@ -362,7 +362,7 @@ class EditorViewModel(
 
         // Push current state to undo
         val currentSnapshot = _frames.value.map { it.deepCopy() }
-        _undoStack.value = _undoStack.value + listOf(currentSnapshot)
+        _undoStack.value += listOf(currentSnapshot)
 
         // Restore next state
         val nextState = redoStack.last()

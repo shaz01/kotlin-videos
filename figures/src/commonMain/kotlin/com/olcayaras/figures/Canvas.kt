@@ -18,6 +18,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toIntSize
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
+/**
+ * Does what ScaleBox does to a canvas.
+ * Draws a viewport into any sized canvas, scaling appropriately,
+ * provided that their aspect ratios match.
+ */
 private fun DrawScope.transformViewport(
     viewport: Viewport,
     viewportSize: IntSize,
