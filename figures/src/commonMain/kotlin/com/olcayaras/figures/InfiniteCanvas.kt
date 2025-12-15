@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -108,13 +109,17 @@ fun InfiniteCanvas(
                         is DragTarget.JointRotation -> {
                             currentOnJointDragStart(dragTarget.compiledJoint.figure, dragTarget.compiledJoint.joint)
                         }
+
                         is DragTarget.FigureMove -> {
                             currentOnFigureDragStart(dragTarget.figure)
                         }
+
                         is DragTarget.ViewportMove -> {
                             currentOnViewportDragStart()
                         }
-                        null -> { /* No drag target, canvas pan - no callback needed */ }
+
+                        null -> { /* No drag target, canvas pan - no callback needed */
+                        }
                     }
 
                     // Process pointer events until all fingers are lifted

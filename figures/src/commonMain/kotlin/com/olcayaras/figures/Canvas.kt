@@ -30,13 +30,15 @@ private fun DrawScope.transformViewport(
 ) {
     if (viewportSize.width == 0 || viewportSize.height == 0) return
 
-    scale(
-        scaleX = (size.width / viewportSize.width),
-        scaleY = (size.height / viewportSize.height),
-        pivot = Offset.Zero
-    ) {
-        translate(-viewport.leftX, -viewport.topY) {
-            block()
+    scale(viewport.scale) {
+        scale(
+            scaleX = (size.width / viewportSize.width),
+            scaleY = (size.height / viewportSize.height),
+            pivot = Offset.Zero
+        ) {
+            translate(-viewport.leftX, -viewport.topY) {
+                block()
+            }
         }
     }
 }

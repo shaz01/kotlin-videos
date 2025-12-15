@@ -43,6 +43,7 @@ sealed interface EditorEvent {
 
     // Viewport operations
     data class UpdateViewport(val viewport: Viewport) : EditorEvent
+    data class UpdateViewportScale(val scale: Float) : EditorEvent
 
     // Figure editing - Begin events push undo snapshot, Update events don't
     data class BeginJointDrag(val figure: Figure, val joint: Joint) : EditorEvent
@@ -241,6 +242,19 @@ class EditorViewModel(
         }
     }
 
+    private fun updateViewportScale(scale: Float) {
+        // Update the selected frame's viewport scale (zoom)
+        pushUndoSnapshot()
+        val frameIndex = _selectedFrameIndex.value
+        val currentFrames = _frames.value.toMutableList()
+        if (frameIndex in currentFrames.indices) {
+            val frame = currentFrames[frameIndex]
+            val newViewport = frame.viewport.copy(scale = scale.coerceIn(0.5f, 2.0f))
+            currentFrames[frameIndex] = frame.copy(viewport = newViewport)
+            _frames.value = currentFrames
+        }
+    }
+
     private fun playAnimation(screenSize: IntSize) {
         val segmentFrames = _frames.value.map { it.compile() }
         navigation.bringToFront(
@@ -398,6 +412,7 @@ class EditorViewModel(
                     is EditorEvent.UpdateCanvasState -> updateCanvasState(event.canvasState)
                     is EditorEvent.BeginViewportDrag -> beginViewportDrag()
                     is EditorEvent.UpdateViewport -> updateViewport(event.viewport)
+                    is EditorEvent.UpdateViewportScale -> updateViewportScale(event.scale)
                     is EditorEvent.BeginJointDrag -> beginJointDrag()
                     is EditorEvent.UpdateJointAngle -> updateJointAngle(event.joint, event.newAngle)
                     is EditorEvent.BeginFigureMove -> beginFigureMove()
