@@ -41,7 +41,7 @@ import kotlin.math.roundToInt
  * @param modifier Modifier for the entire component
  * @param valueRange Range of allowed zoom values (default 0.5f to 2.0f)
  * @param resetValue Value to reset to when reset button is clicked (default 1.0f)
- * @param label Label text displayed on the left (default "Zoom")
+ * @param label Label text displayed on the left
  * @param showResetButton Whether to show the reset button (default true)
  */
 @Composable
