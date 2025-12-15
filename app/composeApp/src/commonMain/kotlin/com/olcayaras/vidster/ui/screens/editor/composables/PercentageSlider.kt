@@ -46,7 +46,7 @@ import kotlin.math.roundToInt
  */
 @Composable
 fun PercentageSlider(
-    label: String ,
+    label: String,
     value: Float,
     onValueChange: (Float) -> Unit,
     modifier: Modifier = Modifier,
