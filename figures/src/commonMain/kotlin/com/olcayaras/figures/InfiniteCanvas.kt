@@ -14,6 +14,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -146,7 +147,10 @@ fun InfiniteCanvas(
             translate(canvasState.offsetX, canvasState.offsetY)
             scale(canvasState.scale, canvasState.scale, Offset.Zero)
         }) {
-            // Draw viewport rectangle (camera frame)
+            // Draw dimmed overlay outside viewport to show camera view area
+            drawViewportOverlay(viewportRect)
+
+            // Draw viewport rectangle border (camera frame)
             drawViewportRect(viewportRect)
 
             // Draw onion skin layers (previous/next frames at reduced opacity)
@@ -175,6 +179,40 @@ fun InfiniteCanvas(
             }
         }
     }
+}
+
+/** Draws a semi-transparent overlay outside the viewport to clearly show the camera view area. */
+private fun DrawScope.drawViewportOverlay(viewportRect: Rect) {
+    val overlayColor = Color.Black.copy(alpha = 0.4f)
+    val bigValue = 100000f  // Large enough to cover any reasonable canvas area
+
+    // Top overlay (above viewport)
+    drawRect(
+        color = overlayColor,
+        topLeft = Offset(-bigValue, -bigValue),
+        size = Size(bigValue * 2, viewportRect.top + bigValue)
+    )
+
+    // Bottom overlay (below viewport)
+    drawRect(
+        color = overlayColor,
+        topLeft = Offset(-bigValue, viewportRect.bottom),
+        size = Size(bigValue * 2, bigValue)
+    )
+
+    // Left overlay (left of viewport, between top and bottom)
+    drawRect(
+        color = overlayColor,
+        topLeft = Offset(-bigValue, viewportRect.top),
+        size = Size(viewportRect.left + bigValue, viewportRect.height)
+    )
+
+    // Right overlay (right of viewport, between top and bottom)
+    drawRect(
+        color = overlayColor,
+        topLeft = Offset(viewportRect.right, viewportRect.top),
+        size = Size(bigValue, viewportRect.height)
+    )
 }
 
 /** Draws the viewport rectangle showing the camera frame area. */
