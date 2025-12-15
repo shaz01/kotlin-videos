@@ -4,13 +4,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -24,8 +18,12 @@ import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.toSize
 import kotlin.math.atan2
 
 private const val VIEWPORT_EDGE_HIT_DISTANCE = 20f
@@ -82,7 +80,12 @@ fun InfiniteCanvas(
     val currentOnFigureMoved by rememberUpdatedState(onFigureMoved)
     val currentOnViewportDragStart by rememberUpdatedState(onViewportDragStart)
 
-    val viewportRect by rememberUpdatedState(Rect(offset = viewport.topLeft, size = viewportSize.toSize()))
+    val viewportRect by rememberUpdatedState(viewport.calculateRect(viewportSize))
+
+    val textMeasurer = rememberTextMeasurer()
+    val textStyle = LocalTextStyle.current.merge(
+        color = Color.White
+    )
 
     Canvas(
         modifier = modifier
@@ -156,7 +159,7 @@ fun InfiniteCanvas(
             drawViewportOverlay(viewportRect)
 
             // Draw viewport rectangle border (camera frame)
-            drawViewportRect(viewportRect)
+            drawViewportRect(viewportRect, textStyle, textMeasurer)
 
             // Draw onion skin layers (previous/next frames at reduced opacity)
             onionSkinLayers.forEach { layer ->
@@ -221,7 +224,11 @@ private fun DrawScope.drawViewportOverlay(viewportRect: Rect) {
 }
 
 /** Draws the viewport rectangle showing the camera frame area. */
-private fun DrawScope.drawViewportRect(rect: Rect) {
+private fun DrawScope.drawViewportRect(
+    rect: Rect,
+    textStyle: TextStyle,
+    textMeasurer: TextMeasurer
+) {
     val strokeWidth = 2f
     val dashPattern = PathEffect.dashPathEffect(floatArrayOf(20f, 10f), 0f)
 
@@ -233,13 +240,18 @@ private fun DrawScope.drawViewportRect(rect: Rect) {
         style = Stroke(width = strokeWidth, pathEffect = dashPattern)
     )
 
-    // Draw corner handles for visual feedback
-    val handleSize = 12f
-    val handleColor = Color.Blue.copy(alpha = 0.8f)
-    drawCircle(color = handleColor, radius = handleSize, center = Offset(rect.left, rect.top))
-    drawCircle(color = handleColor, radius = handleSize, center = Offset(rect.right, rect.top))
-    drawCircle(color = handleColor, radius = handleSize, center = Offset(rect.left, rect.bottom))
-    drawCircle(color = handleColor, radius = handleSize, center = Offset(rect.right, rect.bottom))
+    // Draw "Viewport" text above the rectangle
+    val text = "Visible area"
+    val textLayoutResult = textMeasurer.measure(
+        text = AnnotatedString(text),
+        style = textStyle
+    )
+    val textX = rect.left
+    val textY = rect.top - textLayoutResult.size.height - 10f
+    drawText(
+        textLayoutResult = textLayoutResult,
+        topLeft = Offset(textX, textY)
+    )
 }
 
 // =============================================================================
