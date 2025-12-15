@@ -41,6 +41,7 @@ import com.olcayaras.vidster.ui.screens.editor.composables.EditorSheetContainer
 import com.olcayaras.vidster.ui.screens.editor.composables.EditorTimelineColumn
 import com.olcayaras.vidster.ui.screens.editor.composables.EditorToolbar
 import com.olcayaras.vidster.ui.screens.editor.composables.OnionSkinModePicker
+import com.olcayaras.vidster.ui.screens.editor.composables.PercentageSlider
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Crosshair
 import compose.icons.feathericons.Edit2
@@ -314,6 +315,13 @@ fun EditorScreen(
                         propertiesPanelLeft = it.boundsInParent().left.roundToInt()
                     }
             ) {
+                PercentageSlider(
+                    label = "Zoom",
+                    value = model.selectedFrame.viewport.scale,
+                    onValueChange = { take(EditorEvent.UpdateViewportScale(it)) }
+                )
+                HorizontalDivider(Modifier.fillMaxWidth().padding(vertical = 16.dp))
+
                 Text("Figures", style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(8.dp))
 
