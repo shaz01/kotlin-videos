@@ -43,6 +43,8 @@ sealed interface EditorEvent {
 
     // Viewport operations
     data class UpdateViewport(val viewport: Viewport) : EditorEvent
+    data object BeginViewportScaleChange : EditorEvent
+    data class UpdateViewportScale(val scale: Float) : EditorEvent
 
     // Figure editing - Begin events push undo snapshot, Update events don't
     data class BeginJointDrag(val figure: Figure, val joint: Joint) : EditorEvent
@@ -81,7 +83,7 @@ data class EditorState(
     val selectedFrameIndex: Int,
     val canvasState: CanvasState,
     val figureModificationCount: Long = 0L,
-    val screenSize: IntSize = IntSize(1920, 1080),
+    val viewportSize: IntSize,
     val onionSkinMode: OnionSkinMode = OnionSkinMode.Disabled,
     val onionSkinPreviousCount: Int = 2,
     val onionSkinNextCount: Int = 1,
@@ -241,6 +243,23 @@ class EditorViewModel(
         }
     }
 
+    private fun beginViewportScaleChange() {
+        pushUndoSnapshot()
+    }
+
+    private fun updateViewportScale(scale: Float) {
+        // Update the selected frame's viewport scale (zoom)
+        // Note: Snapshot is pushed in beginViewportScaleChange(), not here
+        val frameIndex = _selectedFrameIndex.value
+        val currentFrames = _frames.value.toMutableList()
+        if (frameIndex in currentFrames.indices) {
+            val frame = currentFrames[frameIndex]
+            val newViewport = frame.viewport.copy(scale = scale.coerceIn(0.5f, 2.0f))
+            currentFrames[frameIndex] = frame.copy(viewport = newViewport)
+            _frames.value = currentFrames
+        }
+    }
+
     private fun playAnimation(screenSize: IntSize) {
         val segmentFrames = _frames.value.map { it.compile() }
         navigation.bringToFront(
@@ -340,7 +359,7 @@ class EditorViewModel(
 
         // Push current state to redo
         val currentSnapshot = _frames.value.map { it.deepCopy() }
-        _redoStack.value = _redoStack.value + listOf(currentSnapshot)
+        _redoStack.value += listOf(currentSnapshot)
 
         // Restore previous state
         val previousState = undoStack.last()
@@ -362,7 +381,7 @@ class EditorViewModel(
 
         // Push current state to undo
         val currentSnapshot = _frames.value.map { it.deepCopy() }
-        _undoStack.value = _undoStack.value + listOf(currentSnapshot)
+        _undoStack.value += listOf(currentSnapshot)
 
         // Restore next state
         val nextState = redoStack.last()
@@ -398,6 +417,8 @@ class EditorViewModel(
                     is EditorEvent.UpdateCanvasState -> updateCanvasState(event.canvasState)
                     is EditorEvent.BeginViewportDrag -> beginViewportDrag()
                     is EditorEvent.UpdateViewport -> updateViewport(event.viewport)
+                    is EditorEvent.BeginViewportScaleChange -> beginViewportScaleChange()
+                    is EditorEvent.UpdateViewportScale -> updateViewportScale(event.scale)
                     is EditorEvent.BeginJointDrag -> beginJointDrag()
                     is EditorEvent.UpdateJointAngle -> updateJointAngle(event.joint, event.newAngle)
                     is EditorEvent.BeginFigureMove -> beginFigureMove()
@@ -417,7 +438,7 @@ class EditorViewModel(
             selectedFrameIndex = selectedFrameIndex,
             canvasState = canvasState,
             figureModificationCount = figureModificationCount,
-            screenSize = screenSize,
+            viewportSize = screenSize,
             onionSkinMode = onionSkinMode,
             canUndo = undoStack.isNotEmpty(),
             canRedo = redoStack.isNotEmpty()
