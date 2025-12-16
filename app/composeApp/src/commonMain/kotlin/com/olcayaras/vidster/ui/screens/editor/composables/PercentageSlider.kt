@@ -1,6 +1,8 @@
 package com.olcayaras.vidster.ui.screens.editor.composables
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -43,6 +45,7 @@ import kotlin.math.roundToInt
  * @param resetValue Value to reset to when reset button is clicked (default 1.0f)
  * @param label Label text displayed on the left (default "Zoom")
  * @param showResetButton Whether to show the reset button (default true)
+ * @param onDragStart Callback when the user starts dragging the slider (useful for undo snapshots)
  */
 @Composable
 fun PercentageSlider(
@@ -52,7 +55,8 @@ fun PercentageSlider(
     modifier: Modifier = Modifier,
     valueRange: ClosedFloatingPointRange<Float> = 0.5f..2.0f,
     resetValue: Float = 1.0f,
-    showResetButton: Boolean = true
+    showResetButton: Boolean = true,
+    onDragStart: (() -> Unit)? = null
 ) {
     var isEditing by remember { mutableStateOf(false) }
     var editText by remember { mutableStateOf("") }
@@ -129,10 +133,23 @@ fun PercentageSlider(
         }
     }
 
+    val interactionSource = remember { MutableInteractionSource() }
+    val isDragged by interactionSource.collectIsDraggedAsState()
+    var wasDragged by remember { mutableStateOf(false) }
+
+    // Detect when dragging starts
+    LaunchedEffect(isDragged) {
+        if (isDragged && !wasDragged) {
+            onDragStart?.invoke()
+        }
+        wasDragged = isDragged
+    }
+
     Slider(
         value = value,
         onValueChange = onValueChange,
         valueRange = valueRange,
+        interactionSource = interactionSource,
         modifier = Modifier.fillMaxWidth()
     )
 }

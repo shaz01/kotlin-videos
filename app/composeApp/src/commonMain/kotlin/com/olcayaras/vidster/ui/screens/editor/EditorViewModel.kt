@@ -43,6 +43,7 @@ sealed interface EditorEvent {
 
     // Viewport operations
     data class UpdateViewport(val viewport: Viewport) : EditorEvent
+    data object BeginViewportScaleChange : EditorEvent
     data class UpdateViewportScale(val scale: Float) : EditorEvent
 
     // Figure editing - Begin events push undo snapshot, Update events don't
@@ -242,9 +243,13 @@ class EditorViewModel(
         }
     }
 
+    private fun beginViewportScaleChange() {
+        pushUndoSnapshot()
+    }
+
     private fun updateViewportScale(scale: Float) {
         // Update the selected frame's viewport scale (zoom)
-        pushUndoSnapshot()
+        // Note: Snapshot is pushed in beginViewportScaleChange(), not here
         val frameIndex = _selectedFrameIndex.value
         val currentFrames = _frames.value.toMutableList()
         if (frameIndex in currentFrames.indices) {
@@ -412,6 +417,7 @@ class EditorViewModel(
                     is EditorEvent.UpdateCanvasState -> updateCanvasState(event.canvasState)
                     is EditorEvent.BeginViewportDrag -> beginViewportDrag()
                     is EditorEvent.UpdateViewport -> updateViewport(event.viewport)
+                    is EditorEvent.BeginViewportScaleChange -> beginViewportScaleChange()
                     is EditorEvent.UpdateViewportScale -> updateViewportScale(event.scale)
                     is EditorEvent.BeginJointDrag -> beginJointDrag()
                     is EditorEvent.UpdateJointAngle -> updateJointAngle(event.joint, event.newAngle)

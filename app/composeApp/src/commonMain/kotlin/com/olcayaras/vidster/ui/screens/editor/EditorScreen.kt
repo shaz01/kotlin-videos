@@ -318,7 +318,8 @@ fun EditorScreen(
                 PercentageSlider(
                     label = "Zoom",
                     value = model.selectedFrame.viewport.scale,
-                    onValueChange = { take(EditorEvent.UpdateViewportScale(it)) }
+                    onValueChange = { take(EditorEvent.UpdateViewportScale(it)) },
+                    onDragStart = { take(EditorEvent.BeginViewportScaleChange) }
                 )
                 HorizontalDivider(Modifier.fillMaxWidth().padding(vertical = 16.dp))
 
