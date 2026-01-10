@@ -4,26 +4,27 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.toSize
 import kotlin.math.atan2
 
 private const val VIEWPORT_EDGE_HIT_DISTANCE = 20f
@@ -47,7 +48,7 @@ fun InfiniteCanvas(
     figures: List<Figure>,
     canvasState: CanvasState,
     viewport: Viewport = Viewport(),
-    screenSize: IntSize = IntSize(1920, 1080),
+    viewportSize: IntSize,
     figureModificationCount: Long = 0L,
     rotationAllowed: Boolean = true,
     onionSkinLayers: List<OnionSkinLayer> = emptyList(),
@@ -80,7 +81,12 @@ fun InfiniteCanvas(
     val currentOnFigureMoved by rememberUpdatedState(onFigureMoved)
     val currentOnViewportDragStart by rememberUpdatedState(onViewportDragStart)
 
-    val viewportRect by rememberUpdatedState(Rect(offset = viewport.topLeft, size = screenSize.toSize()))
+    val viewportRect by rememberUpdatedState(viewport.calculateRect(viewportSize))
+
+    val textMeasurer = rememberTextMeasurer()
+    val textStyle = LocalTextStyle.current.merge(
+        color = Color.White
+    )
 
     Canvas(
         modifier = modifier
@@ -107,13 +113,17 @@ fun InfiniteCanvas(
                         is DragTarget.JointRotation -> {
                             currentOnJointDragStart(dragTarget.compiledJoint.figure, dragTarget.compiledJoint.joint)
                         }
+
                         is DragTarget.FigureMove -> {
                             currentOnFigureDragStart(dragTarget.figure)
                         }
+
                         is DragTarget.ViewportMove -> {
                             currentOnViewportDragStart()
                         }
-                        null -> { /* No drag target, canvas pan - no callback needed */ }
+
+                        null -> { /* No drag target, canvas pan - no callback needed */
+                        }
                     }
 
                     // Process pointer events until all fingers are lifted
@@ -146,8 +156,11 @@ fun InfiniteCanvas(
             translate(canvasState.offsetX, canvasState.offsetY)
             scale(canvasState.scale, canvasState.scale, Offset.Zero)
         }) {
-            // Draw viewport rectangle (camera frame)
-            drawViewportRect(viewportRect)
+            // Draw dimmed overlay outside viewport to show camera view area
+            drawViewportOverlay(viewportRect, canvasState)
+
+            // Draw viewport rectangle border (camera frame)
+            drawViewportRect(viewportRect, textStyle, textMeasurer)
 
             // Draw onion skin layers (previous/next frames at reduced opacity)
             onionSkinLayers.forEach { layer ->
@@ -177,8 +190,43 @@ fun InfiniteCanvas(
     }
 }
 
+/** Draws a semi-transparent overlay outside the viewport to clearly show the camera view area. */
+private fun DrawScope.drawViewportOverlay(viewportRect: Rect, canvasState: CanvasState) {
+    val overlayColor = Color.Black.copy(alpha = 0.4f)
+
+    // Calculate the visible canvas bounds from screen coordinates
+    // Screen corners (0,0) and (width, height) transformed to canvas space
+    val (left, top) = canvasState.screenToCanvas(0f, 0f)
+    val (right, bottom) = canvasState.screenToCanvas(size.width, size.height)
+
+    // Use a single Path with EvenOdd fill to create a cutout effect
+    val path = Path().apply {
+        fillType = PathFillType.EvenOdd
+
+        // Outer rectangle (covers only the visible canvas area)
+        moveTo(left, top)
+        lineTo(right, top)
+        lineTo(right, bottom)
+        lineTo(left, bottom)
+        close()
+
+        // Inner rectangle (viewport cutout - drawn in opposite winding order)
+        moveTo(viewportRect.left, viewportRect.top)
+        lineTo(viewportRect.left, viewportRect.bottom)
+        lineTo(viewportRect.right, viewportRect.bottom)
+        lineTo(viewportRect.right, viewportRect.top)
+        close()
+    }
+
+    drawPath(path, overlayColor)
+}
+
 /** Draws the viewport rectangle showing the camera frame area. */
-private fun DrawScope.drawViewportRect(rect: Rect) {
+private fun DrawScope.drawViewportRect(
+    rect: Rect,
+    textStyle: TextStyle,
+    textMeasurer: TextMeasurer
+) {
     val strokeWidth = 2f
     val dashPattern = PathEffect.dashPathEffect(floatArrayOf(20f, 10f), 0f)
 
@@ -190,13 +238,18 @@ private fun DrawScope.drawViewportRect(rect: Rect) {
         style = Stroke(width = strokeWidth, pathEffect = dashPattern)
     )
 
-    // Draw corner handles for visual feedback
-    val handleSize = 12f
-    val handleColor = Color.Blue.copy(alpha = 0.8f)
-    drawCircle(color = handleColor, radius = handleSize, center = Offset(rect.left, rect.top))
-    drawCircle(color = handleColor, radius = handleSize, center = Offset(rect.right, rect.top))
-    drawCircle(color = handleColor, radius = handleSize, center = Offset(rect.left, rect.bottom))
-    drawCircle(color = handleColor, radius = handleSize, center = Offset(rect.right, rect.bottom))
+    // Draw "Viewport" text above the rectangle
+    val text = "Visible area"
+    val textLayoutResult = textMeasurer.measure(
+        text = AnnotatedString(text),
+        style = textStyle
+    )
+    val textX = rect.left
+    val textY = rect.top - textLayoutResult.size.height - 10f
+    drawText(
+        textLayoutResult = textLayoutResult,
+        topLeft = Offset(textX, textY)
+    )
 }
 
 // =============================================================================

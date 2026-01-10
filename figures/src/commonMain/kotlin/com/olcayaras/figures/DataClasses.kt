@@ -1,6 +1,8 @@
 package com.olcayaras.figures
 
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.unit.IntSize
 import kotlinx.serialization.Serializable
 import kotlin.math.cos
 import kotlin.math.sin
@@ -245,6 +247,22 @@ data class Viewport(
         scale = scale + (other.scale - scale) * t,
         rotation = rotation + (other.rotation - rotation) * t
     )
+
+    fun calculateRect(viewportSize: IntSize): Rect {
+        val width = viewportSize.width
+        val height = viewportSize.height
+        val centerX = leftX + width / 2.0f
+        val centerY = topY + height / 2.0f
+
+        val effectiveWidth = width / scale
+        val effectiveHeight = height / scale
+        return Rect(
+            left = centerX - effectiveWidth / 2,
+            top = centerY - effectiveHeight / 2,
+            right = centerX + effectiveWidth / 2,
+            bottom = centerY + effectiveHeight / 2
+        )
+    }
 }
 
 @Serializable
