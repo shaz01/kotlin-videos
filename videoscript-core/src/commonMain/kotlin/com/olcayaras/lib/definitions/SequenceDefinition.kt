@@ -101,7 +101,7 @@ fun SequencesAsVideo(sequences: List<SequenceDefinition>) {
 @Composable
 fun SequencesAsVideoSingleActive(sequences: List<SequenceDefinition>) {
     val currentFrame = currentFrame()
-    val activeSequence = sequences.first { sequence ->
+    val activeSequence = sequences.firstOrNull { sequence ->
         currentFrame in sequence.from.ofFrames..sequence.to.ofFrames
     }
     SharedTransitionLayout {
@@ -119,7 +119,7 @@ fun SequencesAsVideoSingleActive(sequences: List<SequenceDefinition>) {
                 }
             }
 
-            sequence.content(scope)
+            sequence?.content(scope)
         }
     }
 }
