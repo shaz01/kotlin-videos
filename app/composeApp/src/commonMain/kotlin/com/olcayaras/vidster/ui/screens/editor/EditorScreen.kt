@@ -240,7 +240,7 @@ fun EditorScreen(
                         onSelect = { index -> take(EditorEvent.SelectFrame(index)) },
                         onDuplicate = { index -> take(EditorEvent.DuplicateFrame(index)) },
                         onInsertBefore = { index -> take(EditorEvent.InsertFrameAt(index)) },
-                        onInsertAfter = { index -> take(EditorEvent.InsertFrameAt(index)) },
+                        onInsertAfter = { index -> take(EditorEvent.InsertFrameAt(index + 1)) },
                         onDelete = { index -> take(EditorEvent.RemoveFrame(index)) },
                         onEnterSelectionMode = { take(EditorEvent.EnterSelectionMode) },
                         onToggleSelection = { index -> take(EditorEvent.ToggleFrameSelection(index)) },
