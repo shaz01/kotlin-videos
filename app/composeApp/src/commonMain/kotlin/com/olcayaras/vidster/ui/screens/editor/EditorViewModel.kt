@@ -37,6 +37,15 @@ sealed interface EditorEvent {
     data class SelectFrame(val index: Int) : EditorEvent
     data object AddFrame : EditorEvent
     data class RemoveFrame(val index: Int) : EditorEvent
+    data class ReorderFrames(val fromIndex: Int, val toIndex: Int) : EditorEvent
+    data class InsertFrameAt(val index: Int) : EditorEvent
+    data class DuplicateFrame(val index: Int) : EditorEvent
+
+    // Selection mode
+    data object EnterSelectionMode : EditorEvent
+    data object ExitSelectionMode : EditorEvent
+    data class ToggleFrameSelection(val index: Int) : EditorEvent
+    data object DeleteSelectedFrames : EditorEvent
 
     // Canvas operations
     data class UpdateCanvasState(val canvasState: CanvasState) : EditorEvent
@@ -88,7 +97,9 @@ data class EditorState(
     val onionSkinPreviousCount: Int = 2,
     val onionSkinNextCount: Int = 1,
     val canUndo: Boolean = false,
-    val canRedo: Boolean = false
+    val canRedo: Boolean = false,
+    val selectionMode: Boolean = false,
+    val selectedFrameIndices: Set<Int> = emptySet()
 ) {
     val selectedFrame: FigureFrame get() {
         val frame = frames.getOrNull(selectedFrameIndex) ?: frames.lastOrNull() ?: throw IllegalStateException("No frames: ${frames.size}, selected index: $selectedFrameIndex, $frames")
@@ -96,9 +107,6 @@ data class EditorState(
     }
 
     val selectedFigures: List<Figure> get() = selectedFrame.figures
-
-    // Compile selected frame for timeline preview
-    val selectedSegmentFrame: SegmentFrame = selectedFrame.compile()
 
     // Compile all frames for timeline thumbnails
     val segmentFrames: List<SegmentFrame> = frames.map { it.compile() }
@@ -154,6 +162,10 @@ class EditorViewModel(
     private val _figureModificationCount = MutableStateFlow(0L)
     private val _onionSkinMode = MutableStateFlow(OnionSkinMode.Disabled)
 
+    // Selection mode
+    private val _selectionMode = MutableStateFlow(false)
+    private val _selectedFrameIndices = MutableStateFlow<Set<Int>>(emptySet())
+
     // Undo/Redo history stacks
     private val _undoStack = MutableStateFlow<List<List<FigureFrame>>>(emptyList())
     private val _redoStack = MutableStateFlow<List<List<FigureFrame>>>(emptyList())
@@ -206,6 +218,94 @@ class EditorViewModel(
         if (_selectedFrameIndex.value >= newFrames.size) {
             _selectedFrameIndex.value = newFrames.lastIndex
         }
+    }
+
+    private fun reorderFrames(fromIndex: Int, toIndex: Int) {
+        if (fromIndex == toIndex) return
+        if (fromIndex !in _frames.value.indices || toIndex !in _frames.value.indices) return
+
+        pushUndoSnapshot()
+        val newFrames = _frames.value.toMutableList()
+        val movedFrame = newFrames.removeAt(fromIndex)
+        newFrames.add(toIndex, movedFrame)
+        _frames.value = newFrames
+
+        // Update selection to follow the moved frame
+        _selectedFrameIndex.value = toIndex
+    }
+
+    private fun insertFrameAt(index: Int) {
+        pushUndoSnapshot()
+        val insertIndex = index.coerceIn(0, _frames.value.size)
+
+        // Clone the frame at the insertion point (or previous frame)
+        val templateFrame = _frames.value.getOrNull(insertIndex)
+            ?: _frames.value.getOrNull(insertIndex - 1)
+            ?: FigureFrame(
+                figures = listOf(getMockFigure(x = 400f, y = 300f)),
+                viewport = Viewport()
+            )
+
+        val newFrame = templateFrame.deepCopy()
+        val newFrames = _frames.value.toMutableList()
+        newFrames.add(insertIndex, newFrame)
+        _frames.value = newFrames
+        _selectedFrameIndex.value = insertIndex
+    }
+
+    private fun duplicateFrame(index: Int) {
+        if (index !in _frames.value.indices) return
+
+        pushUndoSnapshot()
+        val sourceFrame = _frames.value[index]
+        val duplicatedFrame = sourceFrame.deepCopy()
+        val newFrames = _frames.value.toMutableList()
+        newFrames.add(index + 1, duplicatedFrame)
+        _frames.value = newFrames
+        _selectedFrameIndex.value = index + 1
+    }
+
+    // Selection mode handlers
+    private fun enterSelectionMode() {
+        _selectionMode.value = true
+        _selectedFrameIndices.value = emptySet()
+    }
+
+    private fun exitSelectionMode() {
+        _selectionMode.value = false
+        _selectedFrameIndices.value = emptySet()
+    }
+
+    private fun toggleFrameSelection(index: Int) {
+        if (index !in _frames.value.indices) return
+
+        val currentSelection = _selectedFrameIndices.value
+        _selectedFrameIndices.value = if (index in currentSelection) {
+            currentSelection - index
+        } else {
+            currentSelection + index
+        }
+    }
+
+    private fun deleteSelectedFrames() {
+        val selectedIndices = _selectedFrameIndices.value
+        if (selectedIndices.isEmpty()) return
+
+        // Ensure at least one frame remains
+        val framesToKeep = _frames.value.size - selectedIndices.size
+        if (framesToKeep < 1) return
+
+        pushUndoSnapshot()
+        val newFrames = _frames.value.filterIndexed { index, _ -> index !in selectedIndices }
+        _frames.value = newFrames
+
+        // Adjust current selection
+        if (_selectedFrameIndex.value >= newFrames.size) {
+            _selectedFrameIndex.value = newFrames.lastIndex.coerceAtLeast(0)
+        }
+
+        // Exit selection mode
+        exitSelectionMode()
     }
 
     private fun updateCanvasState(state: CanvasState) {
@@ -406,6 +506,8 @@ class EditorViewModel(
         val onionSkinMode by _onionSkinMode.collectAsState()
         val undoStack by _undoStack.collectAsState()
         val redoStack by _redoStack.collectAsState()
+        val selectionMode by _selectionMode.collectAsState()
+        val selectedFrameIndices by _selectedFrameIndices.collectAsState()
         val screenSize = IntSize(1920, 1080)
 
         LaunchedEffect(events) {
@@ -414,6 +516,13 @@ class EditorViewModel(
                     is EditorEvent.SelectFrame -> selectFrame(event.index)
                     is EditorEvent.AddFrame -> addFrame()
                     is EditorEvent.RemoveFrame -> removeFrame(event.index)
+                    is EditorEvent.ReorderFrames -> reorderFrames(event.fromIndex, event.toIndex)
+                    is EditorEvent.InsertFrameAt -> insertFrameAt(event.index)
+                    is EditorEvent.DuplicateFrame -> duplicateFrame(event.index)
+                    is EditorEvent.EnterSelectionMode -> enterSelectionMode()
+                    is EditorEvent.ExitSelectionMode -> exitSelectionMode()
+                    is EditorEvent.ToggleFrameSelection -> toggleFrameSelection(event.index)
+                    is EditorEvent.DeleteSelectedFrames -> deleteSelectedFrames()
                     is EditorEvent.UpdateCanvasState -> updateCanvasState(event.canvasState)
                     is EditorEvent.BeginViewportDrag -> beginViewportDrag()
                     is EditorEvent.UpdateViewport -> updateViewport(event.viewport)
@@ -441,7 +550,9 @@ class EditorViewModel(
             viewportSize = screenSize,
             onionSkinMode = onionSkinMode,
             canUndo = undoStack.isNotEmpty(),
-            canRedo = redoStack.isNotEmpty()
+            canRedo = redoStack.isNotEmpty(),
+            selectionMode = selectionMode,
+            selectedFrameIndices = selectedFrameIndices
         )
     }
 }
