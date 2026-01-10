@@ -1,3 +1,3 @@
 package com.olcayaras.vidster.ui.util
 
-actual val IsMobile: Boolean = true
+actual val IsMobile: Boolean = false
