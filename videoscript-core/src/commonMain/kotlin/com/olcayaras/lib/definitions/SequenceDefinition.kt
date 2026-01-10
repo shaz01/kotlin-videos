@@ -96,3 +96,30 @@ fun SequencesAsVideo(sequences: List<SequenceDefinition>) {
         }
     }
 }
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+fun SequencesAsVideoSingleActive(sequences: List<SequenceDefinition>) {
+    val currentFrame = currentFrame()
+    val activeSequence = sequences.firstOrNull { sequence ->
+        currentFrame in sequence.from.ofFrames..sequence.to.ofFrames
+    }
+    SharedTransitionLayout {
+        AnimatedContent(
+            targetState = activeSequence,
+            transitionSpec = { EnterTransition.None togetherWith ExitTransition.None },
+        ) { sequence ->
+            val sharedTransition = this@SharedTransitionLayout
+            val animatedVisibility = this@AnimatedContent
+
+            val scope = remember {
+                object : SequenceAnimationScope, SharedTransitionScope by sharedTransition {
+                    override val animatedVisibility: AnimatedVisibilityScope = animatedVisibility
+                    override val sharedTransition: SharedTransitionScope = sharedTransition
+                }
+            }
+
+            sequence?.content(scope)
+        }
+    }
+}
