@@ -7,6 +7,7 @@ import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -42,6 +43,7 @@ import com.olcayaras.vidster.ui.screens.editor.composables.EditorTimelineColumn
 import com.olcayaras.vidster.ui.screens.editor.composables.EditorToolbar
 import com.olcayaras.vidster.ui.screens.editor.composables.OnionSkinModePicker
 import com.olcayaras.vidster.ui.screens.editor.composables.PercentageSlider
+import com.olcayaras.vidster.ui.screens.editor.composables.TimelineFrameActions
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Crosshair
 import compose.icons.feathericons.Edit2
@@ -49,7 +51,9 @@ import compose.icons.feathericons.Play
 import compose.icons.feathericons.Plus
 import compose.icons.feathericons.RotateCcw
 import compose.icons.feathericons.RotateCw
+import compose.icons.feathericons.Trash2
 import compose.icons.feathericons.User
+import compose.icons.feathericons.X
 import io.github.aakira.napier.Napier
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlin.math.roundToInt
@@ -109,6 +113,9 @@ fun EditorScreen(
     take: (EditorEvent) -> Unit
 ) {
     val density = LocalDensity.current
+    val layoutDirection = LocalLayoutDirection.current
+    val safeDrawingPadding = WindowInsets.safeDrawing.asPaddingValues()
+
     // Measurement state for overlay sizes
     var timelineWidth by remember { mutableIntStateOf(0) }
     var timelineTargetWidth by remember { mutableStateOf(160.dp) }
@@ -220,14 +227,25 @@ fun EditorScreen(
                         .fillMaxHeight()
                         .width(timelineTargetWidth),
                     frames = model.segmentFrames,
-                    onClick = { segmentFrame ->
-                        val index = model.segmentFrames.indexOf(segmentFrame)
-                        if (index >= 0) {
-                            take(EditorEvent.SelectFrame(index))
-                        }
-                    },
-                    selectedFrame = model.selectedSegmentFrame,
-                    viewportSize = model.viewportSize
+                    currentFrameIndex = model.selectedFrameIndex,
+                    viewportSize = model.viewportSize,
+                    contentPadding = PaddingValues(
+                        top = safeDrawingPadding.calculateTopPadding(),
+                        bottom = safeDrawingPadding.calculateBottomPadding(),
+                        start = safeDrawingPadding.calculateStartPadding(layoutDirection)
+                    ),
+                    selectionMode = model.selectionMode,
+                    selectedFrameIndices = model.selectedFrameIndices,
+                    actions = TimelineFrameActions(
+                        onSelect = { index -> take(EditorEvent.SelectFrame(index)) },
+                        onDuplicate = { index -> take(EditorEvent.DuplicateFrame(index)) },
+                        onInsertBefore = { index -> take(EditorEvent.InsertFrameAt(index)) },
+                        onInsertAfter = { index -> take(EditorEvent.InsertFrameAt(index + 1)) },
+                        onDelete = { index -> take(EditorEvent.RemoveFrame(index)) },
+                        onEnterSelectionMode = { take(EditorEvent.EnterSelectionMode) },
+                        onToggleSelection = { index -> take(EditorEvent.ToggleFrameSelection(index)) },
+                        onReorder = { from, to -> take(EditorEvent.ReorderFrames(from, to)) }
+                    )
                 )
 
                 // Resize handle
@@ -276,32 +294,62 @@ fun EditorScreen(
                             toolbarHeight = it.boundsInParent().bottom.roundToInt()
                         }
                 ) {
-                    FilledTonalIconButton(onClick = { take(EditorEvent.PlayAnimation) }) {
-                        Icon(FeatherIcons.Play, contentDescription = "Play Animation")
-                    }
-                    IconButton(onClick = { take(EditorEvent.AddFrame) }) {
-                        Icon(FeatherIcons.Plus, contentDescription = "Add Frame")
-                    }
-                    IconButton(onClick = ::resetViewportToCenter) {
-                        Icon(FeatherIcons.Crosshair, contentDescription = "Reset View")
-                    }
-                    // Onion skin mode picker
-                    OnionSkinModePicker(
-                        selectedMode = model.onionSkinMode,
-                        onModeSelected = { take(EditorEvent.SetOnionSkinMode(it)) }
-                    )
-                    // Undo/Redo buttons
-                    IconButton(
-                        onClick = { take(EditorEvent.Undo) },
-                        enabled = model.canUndo
-                    ) {
-                        Icon(FeatherIcons.RotateCcw, contentDescription = "Undo")
-                    }
-                    IconButton(
-                        onClick = { take(EditorEvent.Redo) },
-                        enabled = model.canRedo
-                    ) {
-                        Icon(FeatherIcons.RotateCw, contentDescription = "Redo")
+                    //TODO: Decide what to do with desktop UX. I don't think this approach is
+                    // the best on desktop, but I think it's what it should be on mobile.
+                    if (model.selectionMode) {
+                        // Selection mode toolbar
+                        IconButton(onClick = { take(EditorEvent.ExitSelectionMode) }) {
+                            Icon(FeatherIcons.X, contentDescription = "Cancel selection")
+                        }
+                        Text(
+                            text = "${model.selectedFrameIndices.size} selected",
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.padding(horizontal = 8.dp)
+                        )
+                        Spacer(Modifier.weight(1f))
+                        // Delete selected frames button
+                        val canDeleteSelected = model.selectedFrameIndices.isNotEmpty() &&
+                            (model.frames.size - model.selectedFrameIndices.size) >= 1
+                        IconButton(
+                            onClick = { take(EditorEvent.DeleteSelectedFrames) },
+                            enabled = canDeleteSelected
+                        ) {
+                            Icon(
+                                FeatherIcons.Trash2,
+                                contentDescription = "Delete selected",
+                                tint = if (canDeleteSelected) MaterialTheme.colorScheme.error
+                                       else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                            )
+                        }
+                    } else {
+                        // Normal toolbar
+                        FilledTonalIconButton(onClick = { take(EditorEvent.PlayAnimation) }) {
+                            Icon(FeatherIcons.Play, contentDescription = "Play Animation")
+                        }
+                        IconButton(onClick = { take(EditorEvent.AddFrame) }) {
+                            Icon(FeatherIcons.Plus, contentDescription = "Add Frame")
+                        }
+                        IconButton(onClick = ::resetViewportToCenter) {
+                            Icon(FeatherIcons.Crosshair, contentDescription = "Reset View")
+                        }
+                        // Onion skin mode picker
+                        OnionSkinModePicker(
+                            selectedMode = model.onionSkinMode,
+                            onModeSelected = { take(EditorEvent.SetOnionSkinMode(it)) }
+                        )
+                        // Undo/Redo buttons
+                        IconButton(
+                            onClick = { take(EditorEvent.Undo) },
+                            enabled = model.canUndo
+                        ) {
+                            Icon(FeatherIcons.RotateCcw, contentDescription = "Undo")
+                        }
+                        IconButton(
+                            onClick = { take(EditorEvent.Redo) },
+                            enabled = model.canRedo
+                        ) {
+                            Icon(FeatherIcons.RotateCw, contentDescription = "Redo")
+                        }
                     }
                 }
             }
