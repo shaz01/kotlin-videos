@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.olcayaras.figures.getMockSegmentFrame
-import com.olcayaras.lib.definitions.SequencesAsVideo
+import com.olcayaras.lib.definitions.SequencesAsVideoSingleActive
 import com.olcayaras.lib.definitions.VideoDefinition
 import com.olcayaras.vidster.previewer.VideoController
 import com.olcayaras.vidster.previewer.previewers.VideoPlayer
@@ -95,7 +95,7 @@ fun VideoScreen(
             background = backgroundColor,
             controller = videoController,
         ) {
-            SequencesAsVideo(animation.sequenceDefinitions)
+            SequencesAsVideoSingleActive(animation.sequenceDefinitions)
         }
     }
 }

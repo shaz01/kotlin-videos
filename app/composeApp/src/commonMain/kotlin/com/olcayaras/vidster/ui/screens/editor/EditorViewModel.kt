@@ -163,7 +163,7 @@ class EditorViewModel(
         const val KEYFRAME_FPS = 3
 
         /** Playback framerate for smooth animation */
-        const val TARGET_FPS = 24
+        const val TARGET_FPS = 120
     }
 
     private val _frames = MutableStateFlow<List<FigureFrame>>(emptyList())
