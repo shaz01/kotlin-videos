@@ -16,7 +16,7 @@ Run android UI tests on the connected device: `./gradlew :app:composeApp:connect
 
 ### Desktop
 Run the desktop application: `./gradlew :app:composeApp:run`
-Run the desktop **hot reload** application: `./gradlew :app:composeApp:runHot`)
+Run the desktop **hot reload** application: `./gradlew :app:composeApp:runHot`
 Run desktop UI tests: `./gradlew :app:composeApp:jvmTest`
 
 ### iOS
