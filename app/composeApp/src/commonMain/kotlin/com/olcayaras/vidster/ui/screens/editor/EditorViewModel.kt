@@ -337,7 +337,7 @@ class EditorViewModel(
             }
             _selectedFrameIndex.value = newSelectedIndex
         } else {
-            // Move the frame accordingly
+            // Adjust selection index to account for deleted frames before current position
             val framesDeletedBeforeCurrent = selectedIndices.filter { i -> i < currentIndex }.size
             _selectedFrameIndex.value = currentIndex - framesDeletedBeforeCurrent
         }
