@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
+import com.olcayaras.vidster.ui.util.IsMobile
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowDown
 import compose.icons.feathericons.ArrowUp
@@ -24,7 +25,6 @@ fun FrameContextMenu(
     expanded: Boolean,
     onDismiss: () -> Unit,
     canDelete: Boolean,
-    showDesktopTip: Boolean = false,
     onDuplicate: () -> Unit,
     onInsertBefore: () -> Unit,
     onInsertAfter: () -> Unit,
@@ -116,7 +116,7 @@ fun FrameContextMenu(
             )
         }
 
-        if (showDesktopTip) {
+        if (!IsMobile) {
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
             Text(
                 text = "Tip: Right-click for quick access",

@@ -238,7 +238,6 @@ private fun EditorTimelineFrame(
             expanded = showContextMenu,
             onDismiss = { showContextMenu = false },
             canDelete = canDelete,
-            showDesktopTip = true,
             onDuplicate = { actions.onDuplicate(index) },
             onInsertBefore = { actions.onInsertBefore(index) },
             onInsertAfter = { actions.onInsertAfter(index + 1) },
