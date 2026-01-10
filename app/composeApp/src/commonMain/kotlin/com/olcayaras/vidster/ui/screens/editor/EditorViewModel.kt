@@ -225,13 +225,24 @@ class EditorViewModel(
         if (fromIndex !in _frames.value.indices || toIndex !in _frames.value.indices) return
 
         pushUndoSnapshot()
+        val originalSelectedIndex = _selectedFrameIndex.value
         val newFrames = _frames.value.toMutableList()
         val movedFrame = newFrames.removeAt(fromIndex)
         newFrames.add(toIndex, movedFrame)
         _frames.value = newFrames
 
-        // Update selection to follow the moved frame
-        _selectedFrameIndex.value = toIndex
+        // Update selection based on how the reorder affects the originally selected frame
+        val newSelectedIndex = when {
+            // If the selected frame is the one being moved, selection follows it
+            originalSelectedIndex == fromIndex -> toIndex
+            // Moving forward: frames between fromIndex and toIndex shift left by 1
+            fromIndex < toIndex && originalSelectedIndex in (fromIndex + 1)..toIndex -> originalSelectedIndex - 1
+            // Moving backward: frames between toIndex (inclusive) and fromIndex (exclusive) shift right by 1
+            toIndex < fromIndex && originalSelectedIndex in toIndex until fromIndex -> originalSelectedIndex + 1
+            // Otherwise, selection is unaffected
+            else -> originalSelectedIndex
+        }
+        _selectedFrameIndex.value = newSelectedIndex
     }
 
     private fun insertFrameAt(index: Int) {
