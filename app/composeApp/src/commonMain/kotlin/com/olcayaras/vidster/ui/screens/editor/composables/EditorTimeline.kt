@@ -3,6 +3,7 @@ package com.olcayaras.vidster.ui.screens.editor.composables
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -186,6 +187,7 @@ private fun EditorTimelineFrame(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .clickable { actions.onSelect(index) }
                 .onRightClick { showContextMenu = true }
                 .background(if (isCurrentFrame) MaterialTheme.colorScheme.surface else Color.Transparent)
                 .padding(8.dp),

@@ -513,7 +513,7 @@ class EditorViewModel(
         LaunchedEffect(events) {
             events.collect { event ->
                 when (event) {
-                    is EditorEvent.SelectFrame -> selectFrame(event.index)
+                    is EditorEvent.SelectFrame -> if (!selectionMode) selectFrame(event.index)
                     is EditorEvent.AddFrame -> addFrame()
                     is EditorEvent.RemoveFrame -> removeFrame(event.index)
                     is EditorEvent.ReorderFrames -> reorderFrames(event.fromIndex, event.toIndex)

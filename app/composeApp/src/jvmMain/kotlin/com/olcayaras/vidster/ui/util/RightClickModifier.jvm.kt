@@ -19,6 +19,7 @@ actual fun Modifier.onRightClick(onRightClick: (position: Offset) -> Unit): Modi
                     val position = event.changes.firstOrNull()?.position
                     if (position != null) {
                         onRightClick(position)
+                        event.changes.forEach { it.consume() }
                     }
                 }
             }
