@@ -242,7 +242,7 @@ private fun EditorTimelineFrame(
             canDelete = canDelete,
             onDuplicate = { actions.onDuplicate(index) },
             onInsertBefore = { actions.onInsertBefore(index) },
-            onInsertAfter = { actions.onInsertAfter(index + 1) },
+            onInsertAfter = { actions.onInsertAfter(index) },
             onDelete = { actions.onDelete(index) },
             onSelect = {
                 actions.onEnterSelectionMode()
