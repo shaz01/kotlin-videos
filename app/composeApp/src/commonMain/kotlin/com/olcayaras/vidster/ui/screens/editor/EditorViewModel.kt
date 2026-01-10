@@ -307,15 +307,30 @@ class EditorViewModel(
         if (framesToKeep < 1) return
 
         pushUndoSnapshot()
+        val currentIndex = _selectedFrameIndex.value
+        val deletingCurrent = currentIndex in selectedIndices
         val newFrames = _frames.value.filterIndexed { index, _ -> index !in selectedIndices }
         _frames.value = newFrames
 
-        // Adjust current selection
-        if (_selectedFrameIndex.value >= newFrames.size) {
-            _selectedFrameIndex.value = newFrames.lastIndex.coerceAtLeast(0)
-        }
+        // Updates selected frame index after deletion
+        if (deletingCurrent) {
+            val totalFrames = _frames.value.size + selectedIndices.size
+            val nextIndex = (currentIndex + 1 until totalFrames).firstOrNull { it !in selectedIndices }
+            val targetOriginalIndex = nextIndex
+                ?: (currentIndex - 1 downTo 0).firstOrNull { it !in selectedIndices }
 
-        // Exit selection mode
+            val newSelectedIndex = if (targetOriginalIndex != null) {
+                val deletedBeforeTarget = selectedIndices.count { it < targetOriginalIndex }
+                targetOriginalIndex - deletedBeforeTarget
+            } else {
+                0
+            }
+            _selectedFrameIndex.value = newSelectedIndex
+        } else {
+            // Move the frame accordingly
+            val framesDeletedBeforeCurrent = selectedIndices.filter { i -> i < currentIndex }.size
+            _selectedFrameIndex.value = currentIndex - framesDeletedBeforeCurrent
+        }
         exitSelectionMode()
     }
 
