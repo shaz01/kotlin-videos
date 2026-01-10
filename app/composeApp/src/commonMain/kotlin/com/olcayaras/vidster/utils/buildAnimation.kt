@@ -17,7 +17,7 @@ import com.olcayaras.lib.videobuilders.buildVideo
 suspend fun buildAnimation(
     frames: List<SegmentFrame>,
     screenSize: IntSize,
-    fps: Int = 3
+    fps: Int
 ): VideoDefinition {
     return buildVideo(fps = fps, ttsProvider = NoOpTTSProvider()) {
         frames.forEach { frame ->

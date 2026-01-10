@@ -37,7 +37,8 @@ sealed class Route {
     data class Video(
         val videoFrames: List<SegmentFrame>,
         val videoScreenWidth: Int,
-        val videoScreenHeight: Int
+        val videoScreenHeight: Int,
+        val fps: Int
     ) : Route()
 
     @Serializable
@@ -64,6 +65,7 @@ sealed class Route {
                     c = componentContext,
                     frames = route.videoFrames,
                     screenSize = IntSize(route.videoScreenWidth, route.videoScreenHeight),
+                    fps = route.fps,
                     onExit = { navigation.pop() }
                 )
 
@@ -93,7 +95,7 @@ sealed class Route {
                 is VideoViewModel -> {
                     val state by viewModel.models.collectAsState()
                     state.animation?.let { animation ->
-                        val controller = rememberVideoController(animation.duration, fps = 60)
+                        val controller = rememberVideoController(animation.duration, fps = state.fps)
                         VideoScreen(
                             animation = animation,
                             videoResolution = state.screenSize,

@@ -20,6 +20,7 @@ import com.olcayaras.figures.SegmentFrame
 import com.olcayaras.figures.Viewport
 import com.olcayaras.figures.compileForEditing
 import com.olcayaras.figures.deepCopy
+import com.olcayaras.figures.expandFrames
 import com.olcayaras.figures.getMockFigure
 import com.olcayaras.figures.getMockShapesDemo
 import com.olcayaras.vidster.ui.Route
@@ -156,6 +157,15 @@ class EditorViewModel(
     c: ComponentContext,
     private val navigation: StackNavigation<Route>,
 ) : ViewModel<EditorEvent, EditorState>(c) {
+
+    companion object {
+        /** Rate at which user keyframes are spaced (frames per second of animation time) */
+        const val KEYFRAME_FPS = 3
+
+        /** Playback framerate for smooth animation */
+        const val TARGET_FPS = 24
+    }
+
     private val _frames = MutableStateFlow<List<FigureFrame>>(emptyList())
     private val _selectedFrameIndex = MutableStateFlow(0)
     private val _canvasState = MutableStateFlow(CanvasState())
@@ -387,12 +397,15 @@ class EditorViewModel(
     }
 
     private fun playAnimation(screenSize: IntSize) {
-        val segmentFrames = _frames.value.map { it.compile() }
+        // Expand keyframes to interpolated frames for smooth playback
+        val expandedFrames = expandFrames(_frames.value, keyframeFps = KEYFRAME_FPS, targetFps = TARGET_FPS)
+        val segmentFrames = expandedFrames.map { it.compile() }
         navigation.bringToFront(
             Route.Video(
-                segmentFrames,
+                videoFrames = segmentFrames,
                 videoScreenWidth = screenSize.width,
-                videoScreenHeight = screenSize.height
+                videoScreenHeight = screenSize.height,
+                fps = TARGET_FPS
             )
         )
     }

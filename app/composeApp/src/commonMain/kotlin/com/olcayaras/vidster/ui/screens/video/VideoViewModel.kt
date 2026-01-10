@@ -20,6 +20,7 @@ sealed interface VideoEvent {
 data class VideoState(
     val animation: VideoDefinition?,
     val screenSize: IntSize,
+    val fps: Int,
     val isLoading: Boolean = true
 )
 
@@ -27,6 +28,7 @@ class VideoViewModel(
     c: ComponentContext,
     private val frames: List<SegmentFrame>,
     private val screenSize: IntSize,
+    private val fps: Int,
     private val onExit: () -> Unit
 ) : ViewModel<VideoEvent, VideoState>(c) {
 
@@ -36,7 +38,7 @@ class VideoViewModel(
     @Composable
     override fun models(events: Flow<VideoEvent>): VideoState {
         LaunchedEffect(Unit) {
-            animation = buildAnimation(frames, screenSize, fps = 3)
+            animation = buildAnimation(frames, screenSize, fps)
             isLoading = false
         }
 
@@ -51,6 +53,7 @@ class VideoViewModel(
         return VideoState(
             animation = animation,
             screenSize = screenSize,
+            fps = fps,
             isLoading = isLoading
         )
     }
