@@ -25,7 +25,7 @@ A filtered feature set for a 2-week development timeline with Koog AI agent inte
 | Onion skinning | Easy | Massive UX improvement for animators, just render previous frame at low alpha |
 | Inbetweening | Medium | Core animation feature - **prime candidate for Koog AI integration** |
 | Undo/redo | Easy-Medium | Essential for usability |
-| Circle segments | Easy | Low effort addition that adds figure expressiveness |
+| Shape segments (circle/rectangle/ellipse/arc) | Easy | Low effort addition that adds figure expressiveness |
 
 ---
 
@@ -71,13 +71,13 @@ The AI agent can provide unique value in these areas:
 - [X] Figure data model + rendering
 - [X] Joint manipulation (drag to rotate)
 - [X] Canvas with single figure
-- [ ] Timeline UI (add/remove/select frames)
+- [X] Timeline UI (add/remove/select/duplicate/reorder frames)
 - [X] Basic playback
 - [ ] JSON serialization
 
 ## Week 2 Milestones
 
-- [X] Onion skinning toggle
+- [X] Onion skinning toggle (previous/next/both)
 - [ ] Linear inbetweening
 - [ ] Koog agent integration (at least one feature)
 - [X] Undo/redo stack

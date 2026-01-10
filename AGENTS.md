@@ -15,7 +15,7 @@ The project is organized into several modules (see [VIDEOSCRIPT_FRAMEWORK.md](VI
 ### Application Modules
 - **app/composeApp** - Main multiplatform UI application
   - Uses all custom convention plugins
-  - Targets: Android, Desktop (JVM), iOS, JS, Wasm
+  - Targets are controlled via `gradle.properties` (`kmp.enable.*`); currently Android + JVM enabled, iOS/JS/Wasm disabled by default
   - Depends on Koin for DI, Ktor client, Molecule for reactive state
 
 - **app/backend** - Ktor-based backend server (JVM only)
@@ -27,6 +27,12 @@ The project is organized into several modules (see [VIDEOSCRIPT_FRAMEWORK.md](VI
 
 - **app/iosApp** - iOS native wrapper
 
+### Library Modules
+- **figures** - Stick-figure data model, compilation, and editor canvas utilities
+- **videoscript-core** - Core video DSL + audio/speech/subtitles building blocks
+- **videoscript-previewer** - Compose preview UI + controller for video playback
+- **videoscript-rendering** - JVM render/export pipeline (frame/video rendering)
+
 ## Current Project: Pivot Animator Clone
 
 The project is pivoting to build a stick figure animation tool (Pivot Animator clone) with AI integration. This is a 2-week MVP focusing on hierarchical figure animation.
@@ -36,24 +42,27 @@ The project is pivoting to build a stick figure animation tool (Pivot Animator c
 The core animation framework for stick figure animations:
 
 **Data Model:**
-- `Joint` - Hierarchical node with id, length, angle (radians), and children
+- `Joint` - Hierarchical node with id, length, angle (radians), segment type, and children
   - Represents connection points in a figure (e.g., shoulder, elbow, wrist)
   - Angles are relative to parent for natural parent-child transformations
+- `SegmentType` - Line, circle/filled circle, rectangle, ellipse, arc
 - `Figure` - Complete stick figure with name, root joint, and x/y position
 - `FigureFrame` - Snapshot containing figures, viewport, and viewport transitions
 - `Segment` - Compiled joint for rendering (startX, startY, length, angle)
 - `SegmentFrame` - Compiled frame ready for rendering (segments + viewport)
+- `CompiledJoint` - Compiled joint with world-space positions for hit testing and editing
 
 **Viewport System:**
-- Controls camera (offsetX, offsetY, scale, rotation)
+- Controls camera (leftX, topY, scale, rotation)
 - Supports lerp interpolation for smooth camera movements
 - Viewport transitions (None, Lerp)
 
 **Rendering:**
 - `SegmentFrameCanvas` - Non-interactive Compose canvas for rendering frames
   - Supports screen size scaling for consistent rendering across sizes
-  - Draws segments as lines with rounded caps and joint circles
+  - Draws segments with multiple shapes and joint circles
   - Applies viewport transformations around canvas center
+- `InfiniteCanvas` - Interactive editor canvas with pan/zoom, viewport overlay, joint/figure dragging, and onion-skin layers
 
 ### Editor UI (`com.olcayaras.vidster.ui.screens.editor`)
 
@@ -66,8 +75,8 @@ The animation editor interface:
 
 **State Management:**
 - `EditorViewModel` - Manages frames list, selected frame, screen size
-- `EditorEvent` - User actions (SelectFrame, AddFrame, RemoveFrame)
-- `EditorState` - Current editor state
+- `EditorEvent` - User actions (frame ops, selection mode, viewport/canvas updates, joint/figure edits, playback, undo/redo)
+- `EditorState` - Current editor state (selection mode, onion skin, undo/redo, canvas/viewport state)
 
 **Architecture:**
 - Uses custom `ViewModel` base class with Decompose ComponentContext
@@ -79,16 +88,16 @@ The animation editor interface:
 **Week 1 (Essential):**
 - ✓ Line segments and hierarchical figure model
 - ✓ Basic rendering system
-- Frame timeline and keyframes
-- Joint dragging (Forward Kinematics)
-- Playback controls
+- ✓ Frame timeline (selection, duplicate/insert, reorder)
+- ✓ Joint dragging (Forward Kinematics)
+- ✓ Playback controls
 - Save/Load JSON
 
 **Week 2 (High-Value):**
-- Onion skinning (show previous frames at low alpha)
+- ✓ Onion skinning (show previous/next frames at low alpha)
 - Linear inbetweening between keyframes
-- Undo/redo stack
-- Circle segments for figure expressiveness
+- ✓ Undo/redo stack
+- ✓ Circle segments for figure expressiveness (plus rectangle/ellipse/arc)
 - **Koog AI integration** for smart inbetweening and pose suggestions
 
 **Deferred:**
