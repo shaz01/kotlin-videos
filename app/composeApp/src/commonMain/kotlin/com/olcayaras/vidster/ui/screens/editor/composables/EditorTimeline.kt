@@ -307,15 +307,7 @@ private fun EditorTimelineColumnPreview() {
                 currentFrameIndex = 2,
                 viewportSize = IntSize(1920, 1080),
                 innerPadding = 8.dp,
-                actions = TimelineFrameActions(
-                    onSelect = {},
-                    onDuplicate = {},
-                    onInsertBefore = {},
-                    onInsertAfter = {},
-                    onDelete = {},
-                    onEnterSelectionMode = {},
-                    onToggleSelection = {}
-                )
+                actions = TimelineFrameActions.Empty
             )
         }
     }
