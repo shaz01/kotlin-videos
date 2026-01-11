@@ -9,12 +9,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import com.olcayaras.vidster.di.initKoin
 import com.olcayaras.vidster.ui.App
 import com.olcayaras.vidster.util.ActivityHolder
 
 class AppActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        initKoin()
+
         ActivityHolder.setActivity(this)
         enableEdgeToEdge()
         WindowCompat.setDecorFitsSystemWindows(window, false)
