@@ -24,6 +24,7 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.composeIcons.featherIcons)
+            implementation(libs.filekit.core)
             implementation(project(":videoscript-core"))
         }
 

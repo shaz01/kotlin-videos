@@ -20,6 +20,7 @@ kotlin {
             implementation(libs.filekit.dialogs.compose)
             implementation(project(":figures"))
             implementation(project(":videoscript-previewer"))
+            implementation(project(":videoscript-rendering"))
             implementation(project(":videoscript-core"))
         }
 

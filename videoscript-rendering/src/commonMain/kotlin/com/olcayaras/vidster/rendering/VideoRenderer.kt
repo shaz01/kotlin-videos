@@ -1,12 +1,12 @@
 package com.olcayaras.vidster.rendering
 
 import com.olcayaras.lib.definitions.AudioDefinition
-import java.nio.file.Path
+import io.github.vinceglb.filekit.PlatformFile
 import kotlin.time.Duration
 
 interface VideoRenderer {
     fun exportVideo(
-        outputPath: Path,
+        outputPath: PlatformFile,
         totalDuration: Duration,
         fps: Int = 30,
         withAlpha: Boolean = false,

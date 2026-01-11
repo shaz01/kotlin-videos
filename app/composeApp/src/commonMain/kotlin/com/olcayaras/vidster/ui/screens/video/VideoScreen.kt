@@ -23,8 +23,8 @@ import com.olcayaras.figures.SegmentFrame
 import com.olcayaras.figures.getMockSegmentFrame
 import com.olcayaras.lib.definitions.SequencesAsVideoSingleActive
 import com.olcayaras.lib.definitions.VideoDefinition
-import com.olcayaras.vidster.export.VideoExportResult
-import com.olcayaras.vidster.export.exportVideoWithDialog
+import com.olcayaras.vidster.utils.VideoExportResult
+import com.olcayaras.vidster.utils.exportVideoWithDialog
 import com.olcayaras.vidster.previewer.VideoController
 import com.olcayaras.vidster.previewer.previewers.VideoPlayer
 import com.olcayaras.vidster.previewer.rememberVideoController

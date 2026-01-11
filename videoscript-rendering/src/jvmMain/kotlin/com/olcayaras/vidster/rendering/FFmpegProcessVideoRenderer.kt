@@ -2,6 +2,7 @@ package com.olcayaras.vidster.rendering
 
 import com.olcayaras.lib.definitions.AudioDefinition
 import com.olcayaras.lib.ofFrames
+import io.github.vinceglb.filekit.PlatformFile
 import org.jetbrains.skia.Bitmap
 import java.nio.file.Files
 import java.nio.file.Path
@@ -12,7 +13,7 @@ class FFmpegProcessVideoRenderer(val frameRenderer: FrameRenderer): VideoRendere
     private val tempAudioFiles = mutableListOf<Path>()
     
     override fun exportVideo(
-        outputPath: Path,
+        outputPath: PlatformFile,
         totalDuration: Duration,
         fps: Int,
         withAlpha: Boolean,
@@ -26,7 +27,7 @@ class FFmpegProcessVideoRenderer(val frameRenderer: FrameRenderer): VideoRendere
         val audioFiles = createTempAudioFiles(audio)
         
         val ffmpegProcess = startFFmpegProcessRaw(
-            outputPath,
+            outputPath.file.toPath(),
             frameRenderer.width,
             frameRenderer.height,
             fps,

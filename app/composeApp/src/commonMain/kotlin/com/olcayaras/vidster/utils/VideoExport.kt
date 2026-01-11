@@ -1,8 +1,10 @@
-package com.olcayaras.vidster.export
+package com.olcayaras.vidster.utils
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.IntSize
 import com.olcayaras.figures.SegmentFrame
+import com.olcayaras.lib.speech.NoOpTTSProvider
+import com.olcayaras.vidster.rendering.exportVideo
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.dialogs.openFileSaver
@@ -30,12 +32,13 @@ suspend fun exportVideoWithDialog(
 
     return try {
         withContext(Dispatchers.Default) {
-            exportSegmentFramesVideo(
-                destination = destination,
-                frames = frames,
-                screenSize = screenSize,
+            exportVideo(
                 fps = fps,
-                backgroundColor = backgroundColor,
+                ttsProvider = NoOpTTSProvider(),
+                screenSize = screenSize,
+                exportTo = destination,
+                background = backgroundColor,
+                videoFactory = { buildAnimation(frames, screenSize, fps) }
             )
         }
         VideoExportResult.Success(destination)
@@ -43,11 +46,3 @@ suspend fun exportVideoWithDialog(
         VideoExportResult.Failed(t)
     }
 }
-
-internal expect suspend fun exportSegmentFramesVideo(
-    destination: PlatformFile,
-    frames: List<SegmentFrame>,
-    screenSize: IntSize,
-    fps: Int,
-    backgroundColor: Color,
-)

@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -20,13 +19,13 @@ import com.olcayaras.lib.speech.TTSProvider
 import com.olcayaras.lib.speech.asCachedTTSProvider
 import com.olcayaras.lib.videobuilders.SequenceScope
 import com.olcayaras.lib.videobuilders.buildVideo
-import java.nio.file.Path
+import io.github.vinceglb.filekit.PlatformFile
 
 suspend fun exportVideo(
     fps: Int = 60,
     ttsProvider: TTSProvider,
     screenSize: IntSize,
-    exportTo: Path,
+    exportTo: PlatformFile,
     background: Color = Color.White,
     density: Float = 1f,
     withAlpha: Boolean = background.alpha < 1f,
