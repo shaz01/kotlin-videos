@@ -1,4 +1,4 @@
-package com.olcayaras.vidster.util
+package com.olcayaras.vidster.utils
 
 /**
  * No-op implementation for desktop.

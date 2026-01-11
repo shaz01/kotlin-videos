@@ -1,4 +1,4 @@
-package com.olcayaras.vidster.util
+package com.olcayaras.vidster.utils
 
 import android.app.Activity
 import android.content.pm.ActivityInfo

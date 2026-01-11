@@ -1,4 +1,4 @@
-package com.olcayaras.vidster.util
+package com.olcayaras.vidster.utils
 
 /**
  * Types of screen orientation that can be requested.
