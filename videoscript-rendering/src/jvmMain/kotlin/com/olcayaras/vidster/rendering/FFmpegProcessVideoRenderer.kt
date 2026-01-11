@@ -2,30 +2,32 @@ package com.olcayaras.vidster.rendering
 
 import com.olcayaras.lib.definitions.AudioDefinition
 import com.olcayaras.lib.ofFrames
+import io.github.vinceglb.filekit.PlatformFile
 import org.jetbrains.skia.Bitmap
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import kotlin.time.Duration
 
-class VideoRenderer(val frameRenderer: FrameRenderer, val audio: List<AudioDefinition>) {
+class FFmpegProcessVideoRenderer(val frameRenderer: FrameRenderer): VideoRenderer {
     private val tempAudioFiles = mutableListOf<Path>()
     
-    fun exportVideo(
-        outputPath: Path,
+    override fun exportVideo(
+        outputPath: PlatformFile,
         totalDuration: Duration,
-        fps: Int = 30,
-        withAlpha: Boolean = false,
-        onFrameRendered: (frameIndex: Int, totalFrames: Int) -> Unit = { _, _ -> }
+        fps: Int,
+        withAlpha: Boolean,
+        audio: List<AudioDefinition>,
+        onFrameRendered: (frameIndex: Int, totalFrames: Int) -> Unit
     ) {
         val totalFrames = totalDuration.ofFrames(fps)
         val frameIntervalNanos = 1_000_000_000L / fps
 
         // Create temporary audio files from base64 data
-        val audioFiles = createTempAudioFiles()
+        val audioFiles = createTempAudioFiles(audio)
         
         val ffmpegProcess = startFFmpegProcessRaw(
-            outputPath,
+            outputPath.file.toPath(),
             frameRenderer.width,
             frameRenderer.height,
             fps,
@@ -113,7 +115,7 @@ class VideoRenderer(val frameRenderer: FrameRenderer, val audio: List<AudioDefin
         }
     }
     
-    private fun createTempAudioFiles(): List<AudioFileInfo> {
+    private fun createTempAudioFiles(audio: List<AudioDefinition>): List<AudioFileInfo> {
         val audioFiles = mutableListOf<AudioFileInfo>()
         
         audio.forEach { audioDefinition ->

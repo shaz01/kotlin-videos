@@ -17,8 +17,10 @@ kotlin {
             implementation(ktorhttp.serialization)
             implementation(libs.molecule)
             implementation(libs.filekit.core)
+            implementation(libs.filekit.dialogs.compose)
             implementation(project(":figures"))
             implementation(project(":videoscript-previewer"))
+            implementation(project(":videoscript-rendering"))
             implementation(project(":videoscript-core"))
         }
 
@@ -29,6 +31,7 @@ kotlin {
 
         jvmMain.dependencies {
             implementation(ktorhttp.client.cio)
+            implementation(project(":videoscript-rendering"))
         }
 
         iosMain.dependencies {

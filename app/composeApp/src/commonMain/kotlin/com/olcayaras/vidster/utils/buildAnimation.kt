@@ -10,6 +10,7 @@ import com.olcayaras.figures.SegmentFrameCanvas
 import com.olcayaras.lib.asDuration
 import com.olcayaras.lib.definitions.VideoDefinition
 import com.olcayaras.lib.speech.NoOpTTSProvider
+import com.olcayaras.lib.videobuilders.SequenceScope
 import com.olcayaras.lib.videobuilders.SequenceEnd
 import com.olcayaras.lib.videobuilders.SequenceStart
 import com.olcayaras.lib.videobuilders.buildVideo
@@ -20,11 +21,11 @@ suspend fun buildAnimation(
     fps: Int
 ): VideoDefinition {
     return buildVideo(fps = fps, ttsProvider = NoOpTTSProvider()) {
+        val frameDuration = 1.asDuration(fps)
         frames.forEach { frame ->
-            val frameToMs = 1.asDuration(fps)
             Sequence(
                 start = SequenceStart.AfterPrevious,
-                end = SequenceEnd.FixedDuration(frameToMs),
+                end = SequenceEnd.FixedDuration(frameDuration),
                 enter = EnterTransition.None,
                 exit = ExitTransition.None
             ) {

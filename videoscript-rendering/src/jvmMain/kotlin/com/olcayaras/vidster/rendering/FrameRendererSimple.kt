@@ -8,15 +8,6 @@ import androidx.compose.ui.InternalComposeUiApi
 import org.jetbrains.skia.*
 import androidx.compose.ui.unit.Density
 
-
-interface FrameRenderer {
-    val width: Int
-    val height: Int
-    val density: Density
-    fun setContent(content: @Composable () -> Unit)
-    fun renderFrame(timeNanos: Long): Image
-}
-
 class FrameRendererSimple(
     override val width: Int,
     override val height: Int,
@@ -36,7 +27,7 @@ class FrameRendererSimple(
         return scene.render(timeNanos)
     }
 
-    fun cleanup() {
+    override fun cleanup() {
         scene.close()
     }
 }

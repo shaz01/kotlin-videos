@@ -19,9 +19,12 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.olcayaras.figures.SegmentFrame
 import com.olcayaras.figures.getMockSegmentFrame
 import com.olcayaras.lib.definitions.SequencesAsVideoSingleActive
 import com.olcayaras.lib.definitions.VideoDefinition
+import com.olcayaras.vidster.utils.VideoExportResult
+import com.olcayaras.vidster.utils.exportVideoWithDialog
 import com.olcayaras.vidster.previewer.VideoController
 import com.olcayaras.vidster.previewer.previewers.VideoPlayer
 import com.olcayaras.vidster.previewer.rememberVideoController
@@ -30,8 +33,10 @@ import com.olcayaras.vidster.utils.buildAnimation
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Pause
 import compose.icons.feathericons.Play
+import compose.icons.feathericons.Share
 import compose.icons.feathericons.X
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlin.time.DurationUnit
 
@@ -45,10 +50,14 @@ fun VideoScreen(
     videoResolution: IntSize,
     backgroundColor: Color = Color.White,
     videoController: VideoController,
+    frames: List<SegmentFrame>,
     onExit: () -> Unit = {},
 ) {
     var controlsVisible by remember { mutableStateOf(true) }
     var interactionTrigger by remember { mutableIntStateOf(0) }
+    var isExporting by remember { mutableStateOf(false) }
+    var showFfmpegPrompt by remember { mutableStateOf(false) }
+    val exportScope = rememberCoroutineScope()
 
     // Auto-hide controls after 3 seconds of inactivity
     LaunchedEffect(interactionTrigger, videoController.isPlaying) {
@@ -72,6 +81,7 @@ fun VideoScreen(
         progress = currentFrame.toFloat() / videoController.maxFrames.toFloat(),
         currentTimeSeconds = currentDuration.inWholeSeconds,
         totalTimeSeconds = videoController.totalDuration.toLong(DurationUnit.SECONDS),
+        isExporting = isExporting,
         onPlayPauseClick = {
             videoController.togglePlayPause()
             interactionTrigger++
@@ -79,6 +89,23 @@ fun VideoScreen(
         onSeek = { progress ->
             videoController.seekToProgress(progress)
             interactionTrigger++
+        },
+        onExportClick = {
+            if (!isExporting) {
+                exportScope.launch {
+                    isExporting = true
+                    val result = exportVideoWithDialog(
+                        frames = frames,
+                        screenSize = videoResolution,
+                        fps = videoController.fps,
+                        backgroundColor = backgroundColor,
+                    )
+                    if (result is VideoExportResult.Failed && isFfmpegMissing(result.error)) {
+                        showFfmpegPrompt = true
+                    }
+                    isExporting = false
+                }
+            }
         },
         onExit = onExit,
         onToggleControls = {
@@ -98,6 +125,27 @@ fun VideoScreen(
             SequencesAsVideoSingleActive(animation.sequenceDefinitions)
         }
     }
+
+    if (showFfmpegPrompt) {
+        AlertDialog(
+            onDismissRequest = { showFfmpegPrompt = false },
+            confirmButton = {
+                TextButton(onClick = { showFfmpegPrompt = false }) {
+                    Text("OK")
+                }
+            },
+            title = { Text("FFmpeg required") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Sorry - this app is in beta. Export requires FFmpeg to be installed.")
+                    Text("Install FFmpeg and restart the app:")
+                    Text("macOS: brew install ffmpeg")
+                    Text("Windows: winget install ffmpeg")
+                    Text("Linux: sudo apt install ffmpeg (or your distro package manager)")
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -108,8 +156,10 @@ private fun VideoScreenLayout(
     progress: Float,
     currentTimeSeconds: Long,
     totalTimeSeconds: Long,
+    isExporting: Boolean,
     onPlayPauseClick: () -> Unit,
     onSeek: (Float) -> Unit,
+    onExportClick: () -> Unit,
     onExit: () -> Unit,
     onToggleControls: () -> Unit,
     content: @Composable BoxScope.() -> Unit,
@@ -133,7 +183,7 @@ private fun VideoScreenLayout(
             exit = fadeOut(),
             modifier = Modifier.align(Alignment.TopCenter)
         ) {
-            Box(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
@@ -141,12 +191,28 @@ private fun VideoScreenLayout(
                             colors = listOf(scrimColor, transparentColor)
                         )
                     )
-                    .padding(8.dp)
+                    .padding(8.dp),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(
-                    onClick = onExit,
-                    modifier = Modifier.align(Alignment.TopEnd)
+                Button(
+                    onClick = onExportClick,
+                    enabled = !isExporting,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.White.copy(alpha = 0.2f),
+                        contentColor = Color.White
+                    ),
+                    modifier = Modifier.padding(end = 8.dp)
                 ) {
+                    Icon(
+                        imageVector = FeatherIcons.Share,
+                        contentDescription = "Export",
+                        modifier = Modifier.size(20.dp).padding(end = 4.dp)
+                    )
+                    Text(if (isExporting) "Exporting..." else "Export Video")
+                }
+
+                IconButton(onClick = onExit) {
                     Icon(
                         imageVector = FeatherIcons.X,
                         contentDescription = "Exit",
@@ -226,6 +292,18 @@ private fun formatDuration(seconds: Long): String {
     return "%d:%02d".format(mins, secs)
 }
 
+private fun isFfmpegMissing(error: Throwable): Boolean {
+    return generateSequence(error) { it.cause }
+        .mapNotNull { it.message?.lowercase() }
+        .any { message ->
+            message.contains("ffmpeg") &&
+                (message.contains("no such file") ||
+                    message.contains("cannot run program") ||
+                    message.contains("error=2") ||
+                    message.contains("createprocess"))
+        }
+}
+
 @Preview
 @Composable
 private fun VideoScreenPreview() {
@@ -236,8 +314,10 @@ private fun VideoScreenPreview() {
             progress = 0.3f,
             currentTimeSeconds = 12,
             totalTimeSeconds = 45,
+            isExporting = false,
             onPlayPauseClick = {},
             onSeek = {},
+            onExportClick = {},
             onExit = {},
             onToggleControls = {},
             content = {
@@ -269,6 +349,7 @@ private fun VideoScreenWithAnimationPreview() {
                 animation = video,
                 videoResolution = screenSize,
                 videoController = controller,
+                frames = frames,
                 onExit = {}
             )
         } ?: Box(
