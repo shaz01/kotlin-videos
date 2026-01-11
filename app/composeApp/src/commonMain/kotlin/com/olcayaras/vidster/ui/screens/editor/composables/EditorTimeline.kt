@@ -187,6 +187,7 @@ private fun EditorTimelineFrame(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .height(IntrinsicSize.Max)
                 .clickable { actions.onSelect(index) }
                 .onRightClick { showContextMenu = true }
                 .background(if (isCurrentFrame) MaterialTheme.colorScheme.surface else Color.Transparent)
@@ -202,37 +203,53 @@ private fun EditorTimelineFrame(
                 )
             }
 
-            // Frame content
-            Column(modifier = Modifier.weight(1f)) {
-                SegmentFrameCanvas(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(frameShape)
-                        .background(backgroundColor, frameShape)
-                        .border(2.dp, MaterialTheme.colorScheme.outlineVariant, frameShape),
-                    frame = segmentFrame,
-                    viewportSize = viewportSize
-                )
-                Text(
-                    modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 4.dp),
-                    textAlign = TextAlign.Center,
-                    text = "Frame ${index + 1}"
-                )
-            }
-
-            // Menu button (only shown when not in selection mode)
-            if (!selectionMode) {
-                IconButton(
-                    onClick = { showContextMenu = true },
-                    modifier = Modifier.size(32.dp)
+            // Left column: Frame number and menu button stacked vertically
+            Column(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .padding(end = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Frame number (top half)
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = FeatherIcons.MoreVertical,
-                        contentDescription = "Frame options",
-                        modifier = Modifier.size(16.dp)
+                    Text(
+                        text = "${index + 1}",
+                        style = MaterialTheme.typography.labelMedium
                     )
                 }
+                // Menu button (bottom half, only shown when not in selection mode)
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (!selectionMode) {
+                        IconButton(
+                            onClick = { showContextMenu = true },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                imageVector = FeatherIcons.MoreVertical,
+                                contentDescription = "Frame options",
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                }
             }
+
+            // Frame preview
+            SegmentFrameCanvas(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(frameShape)
+                    .background(backgroundColor, frameShape)
+                    .border(2.dp, MaterialTheme.colorScheme.outlineVariant, frameShape),
+                frame = segmentFrame,
+                viewportSize = viewportSize
+            )
         }
 
         // Context menu
