@@ -119,6 +119,7 @@ sealed class Route {
                             animation = animation,
                             videoResolution = state.screenSize,
                             videoController = controller,
+                            frames = state.frames,
                             onExit = { viewModel.take(VideoEvent.Exit) }
                         )
                     }

@@ -21,6 +21,7 @@ data class VideoState(
     val animation: VideoDefinition?,
     val screenSize: IntSize,
     val fps: Int,
+    val frames: List<SegmentFrame>,
     val isLoading: Boolean = true
 )
 
@@ -54,6 +55,7 @@ class VideoViewModel(
             animation = animation,
             screenSize = screenSize,
             fps = fps,
+            frames = frames,
             isLoading = isLoading
         )
     }
