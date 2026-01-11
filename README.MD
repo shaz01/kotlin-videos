@@ -1,37 +1,13 @@
-# Vidster (Compose Multiplatform)
+Hello! I'm Olcay. I'm 19 and I've been coding in Kotlin for around 4 years now. I'm studying CS in Ozyegin University. This is my app for the KotlinConf competition.
 
-## Before running!
- - check your system with [KDoctor](https://github.com/Kotlin/kdoctor)
- - install JDK 17 or higher on your machine
- - add `local.properties` file to the project root and set a path to Android SDK there
+Before building this app, I was experimenting with rendering Compose into videos instead onto the screen. I think Compose has untapped potential to be useful on video creation, so I made a library that turns ordinary Compose code into videos. From there this idea of a simple stick-figure animator came into my head as a fun experiment. I've been building this in my spare time for 2 months now. The result is a lightweight Pivot‑style animation tool. It has keyframes with linear inbetweening, onion-skin previews, video exporting.
 
-### Android
-To run the application on android device/emulator:  
- - open project in Android Studio and run imported android run configuration
+Technologies I used:
+- Kotlin and Compose Multiplatform, currently with JVM and Android targets, but open to expanding when I have more time.
+- Decompose for navigation
+- Molecule
+- Custom gradle convention plugins
+- FileKit for managing files
+- Skia and FFmpeg for rendering videos (on JVM)
 
-To build the application bundle:
- - run `./gradlew :app:composeApp:assembleDebug`
- - find `.apk` file in `app/composeApp/build/outputs/apk/debug/composeApp-debug.apk`
-Run android UI tests on the connected device: `./gradlew :app:composeApp:connectedDebugAndroidTest`
-
-### Desktop
-Run the desktop application: `./gradlew :app:composeApp:run`
-Run the desktop **hot reload** application: `./gradlew :app:composeApp:runHot`
-Run desktop UI tests: `./gradlew :app:composeApp:jvmTest`
-
-### iOS
-To run the application on iPhone device/simulator:
- - Open `iosApp/iosApp.xcproject` in Xcode and run standard configuration
- - Or use [Kotlin Multiplatform Mobile plugin](https://plugins.jetbrains.com/plugin/14936-kotlin-multiplatform-mobile) for Android Studio
-Run iOS simulator UI tests: `./gradlew :app:composeApp:iosSimulatorArm64Test`
-
-### JS Browser (Experimental)
-Run the browser application: `./gradlew :app:composeApp:jsBrowserDevelopmentRun --continue`
-Run browser UI tests: `./gradlew :app:composeApp:jsBrowserTest`
-
-### Wasm Browser (Alpha)
-Run the browser application: `./gradlew :app:composeApp:wasmJsBrowserDevelopmentRun --continue`
-Run browser UI tests: `./gradlew :app:composeApp:wasmJsBrowserTest`
-
-### Target toggles
-Multiplatform targets are controlled via `gradle.properties` (`kmp.enable.*`). By default, Android + JVM are enabled and iOS/JS/Wasm are disabled.
+Hope you find using it as fun as I found building it. 
