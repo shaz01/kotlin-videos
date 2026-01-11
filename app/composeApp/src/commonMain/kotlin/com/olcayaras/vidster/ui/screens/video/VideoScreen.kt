@@ -23,6 +23,7 @@ import com.olcayaras.figures.SegmentFrame
 import com.olcayaras.figures.getMockSegmentFrame
 import com.olcayaras.lib.definitions.SequencesAsVideoSingleActive
 import com.olcayaras.lib.definitions.VideoDefinition
+import com.olcayaras.vidster.export.VideoExportResult
 import com.olcayaras.vidster.export.exportVideoWithDialog
 import com.olcayaras.vidster.previewer.VideoController
 import com.olcayaras.vidster.previewer.previewers.VideoPlayer
@@ -55,6 +56,7 @@ fun VideoScreen(
     var controlsVisible by remember { mutableStateOf(true) }
     var interactionTrigger by remember { mutableIntStateOf(0) }
     var isExporting by remember { mutableStateOf(false) }
+    var showFfmpegPrompt by remember { mutableStateOf(false) }
     val exportScope = rememberCoroutineScope()
 
     // Auto-hide controls after 3 seconds of inactivity
@@ -92,12 +94,15 @@ fun VideoScreen(
             if (!isExporting) {
                 exportScope.launch {
                     isExporting = true
-                    exportVideoWithDialog(
+                    val result = exportVideoWithDialog(
                         frames = frames,
                         screenSize = videoResolution,
                         fps = videoController.fps,
                         backgroundColor = backgroundColor,
                     )
+                    if (result is VideoExportResult.Failed && isFfmpegMissing(result.error)) {
+                        showFfmpegPrompt = true
+                    }
                     isExporting = false
                 }
             }
@@ -119,6 +124,27 @@ fun VideoScreen(
         ) {
             SequencesAsVideoSingleActive(animation.sequenceDefinitions)
         }
+    }
+
+    if (showFfmpegPrompt) {
+        AlertDialog(
+            onDismissRequest = { showFfmpegPrompt = false },
+            confirmButton = {
+                TextButton(onClick = { showFfmpegPrompt = false }) {
+                    Text("OK")
+                }
+            },
+            title = { Text("FFmpeg required") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Sorry - this app is in beta. Export requires FFmpeg to be installed.")
+                    Text("Install FFmpeg and restart the app:")
+                    Text("macOS: brew install ffmpeg")
+                    Text("Windows: winget install ffmpeg")
+                    Text("Linux: sudo apt install ffmpeg (or your distro package manager)")
+                }
+            }
+        )
     }
 }
 
@@ -264,6 +290,18 @@ private fun formatDuration(seconds: Long): String {
     val mins = seconds / 60
     val secs = seconds % 60
     return "%d:%02d".format(mins, secs)
+}
+
+private fun isFfmpegMissing(error: Throwable): Boolean {
+    return generateSequence(error) { it.cause }
+        .mapNotNull { it.message?.lowercase() }
+        .any { message ->
+            message.contains("ffmpeg") &&
+                (message.contains("no such file") ||
+                    message.contains("cannot run program") ||
+                    message.contains("error=2") ||
+                    message.contains("createprocess"))
+        }
 }
 
 @Preview
