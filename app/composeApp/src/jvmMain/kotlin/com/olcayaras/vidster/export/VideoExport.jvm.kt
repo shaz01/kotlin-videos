@@ -5,7 +5,7 @@ import androidx.compose.ui.unit.IntSize
 import com.olcayaras.figures.SegmentFrame
 import com.olcayaras.lib.speech.NoOpTTSProvider
 import com.olcayaras.vidster.rendering.exportVideo
-import com.olcayaras.vidster.utils.addSegmentFrameSequences
+import com.olcayaras.vidster.utils.buildAnimation
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.path
 import java.nio.file.Paths
@@ -23,7 +23,6 @@ internal actual suspend fun exportSegmentFramesVideo(
         screenSize = screenSize,
         exportTo = Paths.get(destination.path),
         background = backgroundColor,
-    ) {
-        addSegmentFrameSequences(frames, screenSize, fps)
-    }
+        videoFactory = { buildAnimation(frames, screenSize, fps) }
+    )
 }

@@ -15,34 +15,26 @@ import com.olcayaras.lib.videobuilders.SequenceEnd
 import com.olcayaras.lib.videobuilders.SequenceStart
 import com.olcayaras.lib.videobuilders.buildVideo
 
-suspend fun SequenceScope.addSegmentFrameSequences(
-    frames: List<SegmentFrame>,
-    screenSize: IntSize,
-    fps: Int
-) {
-    val frameDuration = 1.asDuration(fps)
-    frames.forEach { frame ->
-        Sequence(
-            start = SequenceStart.AfterPrevious,
-            end = SequenceEnd.FixedDuration(frameDuration),
-            enter = EnterTransition.None,
-            exit = ExitTransition.None
-        ) {
-            SegmentFrameCanvas(
-                modifier = Modifier.fillMaxSize(),
-                frame = frame,
-                viewportSize = screenSize
-            )
-        }
-    }
-}
-
 suspend fun buildAnimation(
     frames: List<SegmentFrame>,
     screenSize: IntSize,
     fps: Int
 ): VideoDefinition {
     return buildVideo(fps = fps, ttsProvider = NoOpTTSProvider()) {
-        addSegmentFrameSequences(frames, screenSize, fps)
+        val frameDuration = 1.asDuration(fps)
+        frames.forEach { frame ->
+            Sequence(
+                start = SequenceStart.AfterPrevious,
+                end = SequenceEnd.FixedDuration(frameDuration),
+                enter = EnterTransition.None,
+                exit = ExitTransition.None
+            ) {
+                SegmentFrameCanvas(
+                    modifier = Modifier.fillMaxSize(),
+                    frame = frame,
+                    viewportSize = screenSize
+                )
+            }
+        }
     }
 }
