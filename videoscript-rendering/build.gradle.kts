@@ -8,10 +8,13 @@ plugins {
     alias(libs.plugins.multiplatform)
     alias(libs.plugins.compose)
     alias(libs.plugins.compose.compiler)
+    id("convention.android.library")
 }
+android.namespace = "$ProjectId.videoscript.rendering"
 
 kotlin {
     jvm()
+    androidTarget()
     sourceSets {
         commonMain.dependencies {
             implementation(compose.runtime)

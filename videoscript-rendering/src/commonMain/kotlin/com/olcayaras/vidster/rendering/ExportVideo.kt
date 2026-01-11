@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -33,11 +34,11 @@ suspend fun exportVideo(
 ) {
     val ttsProvider = ttsProvider.asCachedTTSProvider()
     val video = buildVideo(ttsProvider, fps, videoFactory)
-    val renderer = FrameRendererSimple(screenSize.width, screenSize.height, Density(density))
-    val exporter = VideoRenderer(renderer, video.audioDefinitions)
+    val renderer = createFrameRenderer(screenSize.width, screenSize.height, Density(density))
+    val exporter = createVideoRenderer(renderer)
 
     val totalDuration = video.duration
-    var frame by mutableStateOf(0)
+    var frame by mutableIntStateOf(0)
 
     // Handles the sequences part
     renderer.setContent {
@@ -60,6 +61,7 @@ suspend fun exportVideo(
             frame = frameIndex + 1
             println("Rendering frame $frameIndex of $totalFrames")
         },
+        audio = video.audioDefinitions,
         withAlpha = withAlpha,
     )
 
