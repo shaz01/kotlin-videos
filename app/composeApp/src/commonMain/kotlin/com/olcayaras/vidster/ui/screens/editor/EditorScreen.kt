@@ -341,6 +341,10 @@ fun EditorScreen(
                                        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                             )
                         }
+                        Spacer(Modifier.width(8.dp))
+                        TextButton(onClick = { take(EditorEvent.ExitEditor) }) {
+                            Text("Quit")
+                        }
                     } else {
                         // Normal toolbar
                         FilledTonalIconButton(onClick = { take(EditorEvent.PlayAnimation) }) {
@@ -369,6 +373,10 @@ fun EditorScreen(
                             enabled = model.canRedo
                         ) {
                             Icon(FeatherIcons.RotateCw, contentDescription = "Redo")
+                        }
+                        Spacer(Modifier.weight(1f))
+                        TextButton(onClick = { take(EditorEvent.ExitEditor) }) {
+                            Text("Quit")
                         }
                     }
                 }

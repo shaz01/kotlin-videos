@@ -8,6 +8,7 @@ import androidx.compose.ui.unit.IntSize
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.bringToFront
+import com.arkivanov.decompose.router.stack.pop
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import com.olcayaras.vidster.ViewModel
@@ -73,6 +74,9 @@ sealed interface EditorEvent {
 
     // Playback
     data object PlayAnimation : EditorEvent
+
+    // Navigation
+    data object ExitEditor : EditorEvent
 
     // Onion skinning
     data class SetOnionSkinMode(val mode: OnionSkinMode) : EditorEvent
@@ -443,6 +447,10 @@ class EditorViewModel(
         )
     }
 
+    private fun exitEditor() {
+        navigation.pop()
+    }
+
     private fun editFigure(figureIndex: Int) {
         val frame = _frames.value.getOrNull(_selectedFrameIndex.value) ?: return
         val figure = frame.figures.getOrNull(figureIndex) ?: return
@@ -608,6 +616,7 @@ class EditorViewModel(
                     is EditorEvent.EditFigure -> editFigure(event.figureIndex)
                     is EditorEvent.AddNewFigure -> addNewFigure()
                     is EditorEvent.PlayAnimation -> playAnimation(screenSize)
+                    is EditorEvent.ExitEditor -> exitEditor()
                     is EditorEvent.SetOnionSkinMode -> setOnionSkinMode(event.mode)
                     is EditorEvent.Undo -> undo()
                     is EditorEvent.Redo -> redo()
