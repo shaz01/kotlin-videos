@@ -6,10 +6,11 @@ import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import io.github.vinceglb.filekit.FileKit
 import java.awt.Dimension
+import com.olcayaras.vidster.di.initKoin
 import com.olcayaras.vidster.ui.App
 
 fun main() = application {
-    // Initialize FileKit for JVM platform
+    initKoin()
     FileKit.init(appId = "com.olcayaras.vidster")
 
     Window(
