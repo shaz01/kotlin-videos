@@ -150,7 +150,7 @@ fun SegmentFrameCanvas(
         val size = viewportSize ?: size.toIntSize()
         transformViewport(frame.viewport, size) {
             frame.segments.forEach { segment ->
-                drawSegment(segment, Color.Black, 4f)
+                drawSegment(segment, Color.Black, FigureConstants.DEFAULT_STROKE_WIDTH)
             }
         }
     }

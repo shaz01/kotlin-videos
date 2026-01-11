@@ -16,22 +16,6 @@ import kotlin.math.abs
 import kotlin.math.sqrt
 
 // =============================================================================
-// Constants
-// =============================================================================
-
-/**
- * The radius (in pixels) used to detect user interaction with a joint control point.
- * If the user's pointer is within this distance from a joint tip, it is considered a hit.
- */
-const val JOINT_HIT_RADIUS = 48f
-
-/**
- * The maximum distance (in pixels) from a line segment at which a user interaction
- * is considered to hit the segment. Used for selecting or interacting with segments.
- */
-const val SEGMENT_HIT_DISTANCE = 20f
-
-// =============================================================================
 // Hit Testing Utilities
 // =============================================================================
 
@@ -87,8 +71,8 @@ fun transformToLocalCoordinates(
 
 /** Distance from point to a rectangle (returns 0 if inside). */
 fun pointToRectDistance(px: Float, py: Float, compiled: CompiledJoint): Float {
-    val width = compiled.joint.length
-    val height = compiled.joint.length * 0.5f
+    val width = compiled.scaledLength
+    val height = compiled.scaledLength * 0.5f
 
     val (localX, localY) = transformToLocalCoordinates(px, py, compiled)
 
@@ -106,8 +90,8 @@ fun pointToRectDistance(px: Float, py: Float, compiled: CompiledJoint): Float {
 /** Distance from point to ellipse edge (approximate). */
 fun pointToEllipseDistance(px: Float, py: Float, compiled: CompiledJoint): Float {
     val type = compiled.joint.type as SegmentType.Ellipse
-    val height = compiled.joint.length
-    val width = compiled.joint.length * type.widthRatio
+    val height = compiled.scaledLength
+    val width = compiled.scaledLength * type.widthRatio
 
     val (localX, localY) = transformToLocalCoordinates(px, py, compiled)
 
@@ -126,7 +110,7 @@ fun findHitJoint(
     canvasY: Float,
     scale: Float
 ): CompiledJoint? {
-    val hitRadius = JOINT_HIT_RADIUS / scale
+    val hitRadius = FigureConstants.JOINT_HIT_RADIUS / scale
 
     return compiledJoints
         .filter { it.joint.length > 0f }
@@ -141,7 +125,7 @@ fun findHitSegment(
     canvasY: Float,
     scale: Float
 ): CompiledJoint? {
-    val hitDistance = SEGMENT_HIT_DISTANCE / scale
+    val hitDistance = FigureConstants.SEGMENT_HIT_DISTANCE / scale
 
     return compiledJoints
         .asSequence()
@@ -185,7 +169,11 @@ fun Modifier.scrollWheelZoom(
             val event = awaitPointerEvent()
             if (event.type == PointerEventType.Scroll) {
                 val scrollDelta = event.changes.first().scrollDelta
-                val zoomFactor = if (scrollDelta.y > 0) 0.9f else 1.1f
+                val zoomFactor = if (scrollDelta.y > 0) {
+                    FigureConstants.SCROLL_WHEEL_ZOOM_OUT_FACTOR
+                } else {
+                    FigureConstants.SCROLL_WHEEL_ZOOM_IN_FACTOR
+                }
                 val position = event.changes.first().position
                 onCanvasStateChange(
                     getCanvasState().zoom(zoomFactor, position.x, position.y)
@@ -257,7 +245,7 @@ fun DrawScope.drawCompiledJoint(
         SegmentType.Rectangle -> {
             drawRectangleShape(
                 color = color,
-                length = compiled.joint.length,
+                length = compiled.scaledLength,
                 angle = worldAngle,
                 startX = compiled.startX,
                 startY = compiled.startY,
@@ -269,7 +257,7 @@ fun DrawScope.drawCompiledJoint(
             drawEllipseShape(
                 color = color,
                 thickness = thickness,
-                length = compiled.joint.length,
+                length = compiled.scaledLength,
                 widthRatio = compiled.joint.type.widthRatio,
                 angle = worldAngle,
                 centerX = compiled.centerX,
@@ -280,7 +268,7 @@ fun DrawScope.drawCompiledJoint(
             drawArcShape(
                 color = color,
                 thickness = thickness,
-                length = compiled.joint.length,
+                length = compiled.scaledLength,
                 sweepAngle = compiled.joint.type.sweepAngle,
                 angle = worldAngle,
                 centerX = compiled.centerX,

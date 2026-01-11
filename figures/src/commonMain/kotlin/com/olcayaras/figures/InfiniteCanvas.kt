@@ -27,8 +27,6 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.IntSize
 import kotlin.math.atan2
 
-private const val VIEWPORT_EDGE_HIT_DISTANCE = 20f
-
 /**
  * Represents a frame to be rendered as onion skin with a specific opacity and color.
  */
@@ -165,13 +163,17 @@ fun InfiniteCanvas(
             // Draw onion skin layers (previous/next frames at reduced opacity)
             onionSkinLayers.forEach { layer ->
                 layer.compiledJoints.forEach { compiled ->
-                    drawCompiledJoint(compiled, layer.color.copy(alpha = layer.alpha), 4f)
+                    drawCompiledJoint(
+                        compiled,
+                        layer.color.copy(alpha = layer.alpha),
+                        FigureConstants.DEFAULT_STROKE_WIDTH
+                    )
                 }
             }
 
             // Draw figures (current frame)
             compiledJointsForDrawing.forEach { compiled ->
-                drawCompiledJoint(compiled, Color.Black, 4f)
+                drawCompiledJoint(compiled, Color.Black, FigureConstants.DEFAULT_STROKE_WIDTH)
             }
 
             // Draw rotation handles (red dots)
@@ -181,7 +183,7 @@ fun InfiniteCanvas(
                     .forEach { compiled ->
                         drawCircle(
                             color = Color.Red,
-                            radius = 8f,
+                            radius = FigureConstants.JOINT_HANDLE_RADIUS,
                             center = Offset(compiled.endX, compiled.endY)
                         )
                     }
@@ -192,7 +194,7 @@ fun InfiniteCanvas(
 
 /** Draws a semi-transparent overlay outside the viewport to clearly show the camera view area. */
 private fun DrawScope.drawViewportOverlay(viewportRect: Rect, canvasState: CanvasState) {
-    val overlayColor = Color.Black.copy(alpha = 0.4f)
+    val overlayColor = Color.Black.copy(alpha = FigureConstants.VIEWPORT_OVERLAY_ALPHA)
 
     // Calculate the visible canvas bounds from screen coordinates
     // Screen corners (0,0) and (width, height) transformed to canvas space
@@ -227,12 +229,15 @@ private fun DrawScope.drawViewportRect(
     textStyle: TextStyle,
     textMeasurer: TextMeasurer
 ) {
-    val strokeWidth = 2f
-    val dashPattern = PathEffect.dashPathEffect(floatArrayOf(20f, 10f), 0f)
+    val strokeWidth = FigureConstants.VIEWPORT_STROKE_WIDTH
+    val dashPattern = PathEffect.dashPathEffect(
+        floatArrayOf(FigureConstants.VIEWPORT_DASH_ON, FigureConstants.VIEWPORT_DASH_OFF),
+        0f
+    )
 
     // Draw dashed rectangle border
     drawRect(
-        color = Color.Blue.copy(alpha = 0.6f),
+        color = Color.Blue.copy(alpha = FigureConstants.VIEWPORT_BORDER_ALPHA),
         topLeft = rect.topLeft,
         size = rect.size,
         style = Stroke(width = strokeWidth, pathEffect = dashPattern)
@@ -245,7 +250,7 @@ private fun DrawScope.drawViewportRect(
         style = textStyle
     )
     val textX = rect.left
-    val textY = rect.top - textLayoutResult.size.height - 10f
+    val textY = rect.top - textLayoutResult.size.height - FigureConstants.VIEWPORT_LABEL_PADDING
     drawText(
         textLayoutResult = textLayoutResult,
         topLeft = Offset(textX, textY)
@@ -300,7 +305,7 @@ private fun hitTestViewportEdge(
     viewportRect: Rect,
     scale: Float
 ): Boolean {
-    val threshold = VIEWPORT_EDGE_HIT_DISTANCE / scale
+    val threshold = FigureConstants.VIEWPORT_EDGE_HIT_DISTANCE / scale
 
     // Check if point is inside the expanded rect (rect + threshold on all sides)
     val expandedRect = Rect(
@@ -377,4 +382,3 @@ private fun handleSingleTouch(
         }
     }
 }
-
