@@ -43,8 +43,8 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import com.olcayaras.vidster.util.ScreenOrientationType
-import com.olcayaras.vidster.util.setScreenOrientation
+import com.olcayaras.vidster.utils.ScreenOrientationType
+import com.olcayaras.vidster.utils.setScreenOrientation
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Edit2
 import compose.icons.feathericons.Film

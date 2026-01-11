@@ -45,8 +45,8 @@ import com.olcayaras.vidster.ui.screens.editor.composables.EditorToolbar
 import com.olcayaras.vidster.ui.screens.editor.composables.OnionSkinModePicker
 import com.olcayaras.vidster.ui.screens.editor.composables.PercentageSlider
 import com.olcayaras.vidster.ui.screens.editor.composables.TimelineFrameActions
-import com.olcayaras.vidster.util.ScreenOrientationType
-import com.olcayaras.vidster.util.setScreenOrientation
+import com.olcayaras.vidster.utils.ScreenOrientationType
+import com.olcayaras.vidster.utils.setScreenOrientation
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Crosshair
 import compose.icons.feathericons.Edit2

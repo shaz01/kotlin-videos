@@ -11,7 +11,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.olcayaras.vidster.di.initKoin
 import com.olcayaras.vidster.ui.App
-import com.olcayaras.vidster.util.ActivityHolder
+import com.olcayaras.vidster.utils.ActivityHolder
 
 class AppActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
