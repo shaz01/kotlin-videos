@@ -4,7 +4,6 @@ import androidx.compose.runtime.Composable
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
-import com.olcayaras.vidster.di.initKoin
 import com.olcayaras.vidster.ui.navigation.NavigationContent
 import com.olcayaras.vidster.ui.theme.AppTheme
 
