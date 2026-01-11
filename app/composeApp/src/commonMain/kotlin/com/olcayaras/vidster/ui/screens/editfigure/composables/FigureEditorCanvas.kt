@@ -32,9 +32,13 @@ fun FigureEditorCanvas(
     selectedJointId: String?,
     canvasState: CanvasState,
     figureModificationCount: Long = 0L,
+    addJointMode: Boolean = false,
+    newJointType: SegmentType = SegmentType.Line,
     onCanvasStateChange: (CanvasState) -> Unit = {},
     onJointSelected: (String) -> Unit = {},
     onJointRotated: (Joint, Float) -> Unit = { _, _ -> },
+    onJointResized: (Joint, Float) -> Unit = { _, _ -> },
+    onAddJointRequested: (Joint, SegmentType) -> Unit = { _, _ -> },
     onFigureMoved: (Float, Float) -> Unit = { _, _ -> }
 ) {
     var compiledJointsForDrawing by remember {
@@ -49,8 +53,12 @@ fun FigureEditorCanvas(
     val currentOnCanvasStateChange by rememberUpdatedState(onCanvasStateChange)
     val currentOnJointSelected by rememberUpdatedState(onJointSelected)
     val currentOnJointRotated by rememberUpdatedState(onJointRotated)
+    val currentOnJointResized by rememberUpdatedState(onJointResized)
+    val currentOnAddJointRequested by rememberUpdatedState(onAddJointRequested)
     val currentOnFigureMoved by rememberUpdatedState(onFigureMoved)
     val currentFigure by rememberUpdatedState(figure)
+    val currentAddJointMode by rememberUpdatedState(addJointMode)
+    val currentNewJointType by rememberUpdatedState(newJointType)
 
     Canvas(
         modifier = modifier
@@ -77,7 +85,14 @@ fun FigureEditorCanvas(
                         if (event.changes.none { it.pressed }) {
                             // Released - if no significant move, treat as click for selection
                             if (!hasMoved && dragTarget is DragTarget.JointRotation) {
-                                currentOnJointSelected(dragTarget.compiledJoint.joint.id)
+                                if (currentAddJointMode) {
+                                    currentOnAddJointRequested(
+                                        dragTarget.compiledJoint.joint,
+                                        currentNewJointType
+                                    )
+                                } else {
+                                    currentOnJointSelected(dragTarget.compiledJoint.joint.id)
+                                }
                             } else if (!hasMoved && dragTarget is DragTarget.SegmentClick) {
                                 currentOnJointSelected(dragTarget.compiledJoint.joint.id)
                             }
@@ -104,6 +119,7 @@ fun FigureEditorCanvas(
                                 figure = currentFigure,
                                 onCanvasStateChange = currentOnCanvasStateChange,
                                 onJointRotated = currentOnJointRotated,
+                                onJointResized = currentOnJointResized,
                                 onFigureMoved = currentOnFigureMoved
                             )
                         }
@@ -179,6 +195,7 @@ private fun handleSingleTouch(
     figure: Figure,
     onCanvasStateChange: (CanvasState) -> Unit,
     onJointRotated: (Joint, Float) -> Unit,
+    onJointResized: (Joint, Float) -> Unit,
     onFigureMoved: (Float, Float) -> Unit
 ) {
     if (!change.positionChanged()) return
@@ -191,7 +208,10 @@ private fun handleSingleTouch(
             val compiled = dragTarget.compiledJoint
             val newWorldAngle = atan2(canvasY - compiled.startY, canvasX - compiled.startX)
             val newRelativeAngle = newWorldAngle - compiled.parentWorldAngle
+            val distance = Offset(canvasX - compiled.startX, canvasY - compiled.startY).getDistance()
+            val newLength = (distance / FigureConstants.FIGURE_LENGTH_SCALE).coerceAtLeast(0f)
             onJointRotated(compiled.joint, newRelativeAngle)
+            onJointResized(compiled.joint, newLength)
             change.consume()
         }
 
