@@ -15,7 +15,7 @@ class VideoController(
     val totalDuration: Duration,
     val fps: Int
 ) {
-    val maxFrames = totalDuration.ofFrames(fps)
+    val maxFrames = totalDuration.ofFrames(fps).coerceAtLeast(1)
 
     var isPlaying by mutableStateOf(false)
 

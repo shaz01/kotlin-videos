@@ -22,9 +22,13 @@ import com.olcayaras.figures.compileForEditing
 import com.olcayaras.figures.deepCopy
 import com.olcayaras.figures.expandFrames
 import com.olcayaras.figures.getMockFigure
-import com.olcayaras.figures.getMockShapesDemo
+import com.olcayaras.vidster.data.ProjectRepository
 import com.olcayaras.vidster.ui.Route
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.launch
 
 enum class OnionSkinMode {
     Disabled,
@@ -100,14 +104,15 @@ data class EditorState(
     val canUndo: Boolean = false,
     val canRedo: Boolean = false,
     val selectionMode: Boolean = false,
-    val selectedFrameIndices: Set<Int> = emptySet()
+    val selectedFrameIndices: Set<Int> = emptySet(),
+    val isLoading: Boolean = false
 ) {
-    val selectedFrame: FigureFrame get() {
-        val frame = frames.getOrNull(selectedFrameIndex) ?: frames.lastOrNull() ?: throw IllegalStateException("No frames: ${frames.size}, selected index: $selectedFrameIndex, $frames")
-        return frame
-    }
+    val selectedFrame: FigureFrame?
+        get() {
+            return frames.getOrNull(selectedFrameIndex) ?: frames.lastOrNull()
+        }
 
-    val selectedFigures: List<Figure> get() = selectedFrame.figures
+    val selectedFigures: List<Figure> get() = selectedFrame?.figures ?: emptyList()
 
     // Compile all frames for timeline thumbnails
     val segmentFrames: List<SegmentFrame> = frames.map { it.compile() }
@@ -116,46 +121,49 @@ data class EditorState(
      * Computes onion skin frames with decreasing opacity.
      * Previous frames are shown in red tint, next frames in blue tint.
      */
-    val onionSkinFrames: List<OnionSkinFrame> get() {
-        if (onionSkinMode == OnionSkinMode.Disabled) return emptyList()
+    val onionSkinFrames: List<OnionSkinFrame>
+        get() {
+            if (onionSkinMode == OnionSkinMode.Disabled) return emptyList()
 
-        val result = mutableListOf<OnionSkinFrame>()
-        val showPrevious = onionSkinMode == OnionSkinMode.Previous || onionSkinMode == OnionSkinMode.Both
-        val showFuture = onionSkinMode == OnionSkinMode.Future || onionSkinMode == OnionSkinMode.Both
+            val result = mutableListOf<OnionSkinFrame>()
+            val showPrevious = onionSkinMode == OnionSkinMode.Previous || onionSkinMode == OnionSkinMode.Both
+            val showFuture = onionSkinMode == OnionSkinMode.Future || onionSkinMode == OnionSkinMode.Both
 
-        // Previous frames (closer frames have higher opacity)
-        if (showPrevious) {
-            for (i in 1..onionSkinPreviousCount) {
-                val frameIndex = selectedFrameIndex - i
-                if (frameIndex >= 0) {
-                    val frame = frames[frameIndex]
-                    val alpha = 0.4f * (1f - (i - 1).toFloat() / onionSkinPreviousCount)
-                    val compiledJoints = frame.figures.flatMap { it.compileForEditing() }
-                    result.add(OnionSkinFrame(compiledJoints, alpha, isPrevious = true))
+            // Previous frames (closer frames have higher opacity)
+            if (showPrevious) {
+                for (i in 1..onionSkinPreviousCount) {
+                    val frameIndex = selectedFrameIndex - i
+                    if (frameIndex >= 0) {
+                        val frame = frames[frameIndex]
+                        val alpha = 0.4f * (1f - (i - 1).toFloat() / onionSkinPreviousCount)
+                        val compiledJoints = frame.figures.flatMap { it.compileForEditing() }
+                        result.add(OnionSkinFrame(compiledJoints, alpha, isPrevious = true))
+                    }
                 }
             }
-        }
 
-        // Next frames (closer frames have higher opacity)
-        if (showFuture) {
-            for (i in 1..onionSkinNextCount) {
-                val frameIndex = selectedFrameIndex + i
-                if (frameIndex < frames.size) {
-                    val frame = frames[frameIndex]
-                    val alpha = 0.4f * (1f - (i - 1).toFloat() / onionSkinNextCount)
-                    val compiledJoints = frame.figures.flatMap { it.compileForEditing() }
-                    result.add(OnionSkinFrame(compiledJoints, alpha, isPrevious = false))
+            // Next frames (closer frames have higher opacity)
+            if (showFuture) {
+                for (i in 1..onionSkinNextCount) {
+                    val frameIndex = selectedFrameIndex + i
+                    if (frameIndex < frames.size) {
+                        val frame = frames[frameIndex]
+                        val alpha = 0.4f * (1f - (i - 1).toFloat() / onionSkinNextCount)
+                        val compiledJoints = frame.figures.flatMap { it.compileForEditing() }
+                        result.add(OnionSkinFrame(compiledJoints, alpha, isPrevious = false))
+                    }
                 }
             }
-        }
 
-        return result
-    }
+            return result
+        }
 }
 
+@OptIn(FlowPreview::class)
 class EditorViewModel(
     c: ComponentContext,
     private val navigation: StackNavigation<Route>,
+    private val projectId: String,
 ) : ViewModel<EditorEvent, EditorState>(c) {
 
     companion object {
@@ -164,13 +172,19 @@ class EditorViewModel(
 
         /** Playback framerate for smooth animation */
         const val TARGET_FPS = 120
+
+        /** Auto-save debounce delay in milliseconds */
+        private const val AUTO_SAVE_DEBOUNCE_MS = 1000L
     }
+
+    private val repository = ProjectRepository()
 
     private val _frames = MutableStateFlow<List<FigureFrame>>(emptyList())
     private val _selectedFrameIndex = MutableStateFlow(0)
     private val _canvasState = MutableStateFlow(CanvasState())
     private val _figureModificationCount = MutableStateFlow(0L)
     private val _onionSkinMode = MutableStateFlow(OnionSkinMode.Disabled)
+    private val _isLoading = MutableStateFlow(true)
 
     // Selection mode
     private val _selectionMode = MutableStateFlow(false)
@@ -182,15 +196,34 @@ class EditorViewModel(
     private val maxHistorySize = 50
 
     init {
-        // Initialize with a single frame containing a mock figure
-        val initialFrame = FigureFrame(
-            figures = listOf(
-                getMockFigure(x = 400f, y = 300f),
-                getMockShapesDemo(x = 700f, y = 300f)
-            ),
-            viewport = Viewport()
-        )
-        _frames.value = listOf(initialFrame)
+        // Load project from repository
+        backgroundScope.launch {
+            val project = repository.loadProject(projectId)
+            if (project != null) {
+                _frames.value = project.frames.map { it.deepCopy() }
+            } else {
+                // Fallback to default frame if project not found
+                Napier.e { "Project not found: $projectId, using default frame" }
+                _frames.value = listOf(
+                    FigureFrame(
+                        figures = listOf(getMockFigure(x = 400f, y = 300f)),
+                        viewport = Viewport()
+                    )
+                )
+            }
+            _isLoading.value = false
+        }
+
+        // Auto-save on frame changes (debounced)
+        backgroundScope.launch {
+            _frames
+                .drop(1) // Skip initial value
+                .debounce(AUTO_SAVE_DEBOUNCE_MS)
+                .collect { frames ->
+                    Napier.d { "Auto-saving project: $projectId" }
+                    repository.saveProjectFrames(projectId, frames)
+                }
+        }
     }
 
     private fun selectFrame(index: Int) {
@@ -547,6 +580,7 @@ class EditorViewModel(
         val redoStack by _redoStack.collectAsState()
         val selectionMode by _selectionMode.collectAsState()
         val selectedFrameIndices by _selectedFrameIndices.collectAsState()
+        val isLoading by _isLoading.collectAsState()
         val screenSize = IntSize(1920, 1080)
 
         LaunchedEffect(events) {
@@ -591,7 +625,8 @@ class EditorViewModel(
             canUndo = undoStack.isNotEmpty(),
             canRedo = redoStack.isNotEmpty(),
             selectionMode = selectionMode,
-            selectedFrameIndices = selectedFrameIndices
+            selectedFrameIndices = selectedFrameIndices,
+            isLoading = isLoading
         )
     }
 }

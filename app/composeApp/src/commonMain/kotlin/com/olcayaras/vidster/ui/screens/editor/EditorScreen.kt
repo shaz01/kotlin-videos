@@ -8,6 +8,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -44,6 +45,8 @@ import com.olcayaras.vidster.ui.screens.editor.composables.EditorToolbar
 import com.olcayaras.vidster.ui.screens.editor.composables.OnionSkinModePicker
 import com.olcayaras.vidster.ui.screens.editor.composables.PercentageSlider
 import com.olcayaras.vidster.ui.screens.editor.composables.TimelineFrameActions
+import com.olcayaras.vidster.util.ScreenOrientationType
+import com.olcayaras.vidster.util.setScreenOrientation
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Crosshair
 import compose.icons.feathericons.Edit2
@@ -112,6 +115,23 @@ fun EditorScreen(
     model: EditorState,
     take: (EditorEvent) -> Unit
 ) {
+    // Force landscape orientation for editor
+    LaunchedEffect(Unit) {
+        setScreenOrientation(ScreenOrientationType.Landscape)
+    }
+
+    // Show loading indicator while project is loading
+    if (model.isLoading || model.selectedFrame == null) {
+        Box(
+            modifier = Modifier.fillMaxSize().background(Color.White),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
+    val selectedFrame = model.selectedFrame!! // Safe because we checked above
     val density = LocalDensity.current
     val layoutDirection = LocalLayoutDirection.current
     val safeDrawingPadding = WindowInsets.safeDrawing.asPaddingValues()
@@ -131,7 +151,7 @@ fun EditorScreen(
             left = timelineWidth,
             top = toolbarHeight,
             right = propertiesPanelLeft,
-            viewport = model.selectedFrame.viewport,
+            viewport = selectedFrame.viewport,
             viewportSize = model.viewportSize
         )?.let {
             take(EditorEvent.UpdateCanvasState(it))
@@ -186,7 +206,7 @@ fun EditorScreen(
             modifier = Modifier.fillMaxSize(),
             figures = model.selectedFigures,
             canvasState = model.canvasState,
-            viewport = model.selectedFrame.viewport,
+            viewport = selectedFrame.viewport,
             viewportSize = model.viewportSize,
             figureModificationCount = model.figureModificationCount,
             rotationAllowed = true,
@@ -365,7 +385,7 @@ fun EditorScreen(
             ) {
                 PercentageSlider(
                     label = "Zoom",
-                    value = model.selectedFrame.viewport.scale,
+                    value = selectedFrame.viewport.scale,
                     onValueChange = { take(EditorEvent.UpdateViewportScale(it)) },
                     onDragStart = { take(EditorEvent.BeginViewportScaleChange) }
                 )

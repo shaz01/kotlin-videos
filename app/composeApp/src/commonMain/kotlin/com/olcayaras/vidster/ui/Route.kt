@@ -16,6 +16,8 @@ import com.olcayaras.vidster.previewer.rememberVideoController
 import com.olcayaras.vidster.ui.navigation.NavigationFactory
 import com.olcayaras.vidster.ui.screens.editor.EditorScreen
 import com.olcayaras.vidster.ui.screens.editor.EditorViewModel
+import com.olcayaras.vidster.ui.screens.projectlist.ProjectListScreen
+import com.olcayaras.vidster.ui.screens.projectlist.ProjectListViewModel
 import com.olcayaras.vidster.ui.screens.editfigure.EditFigureScreen
 import com.olcayaras.vidster.ui.screens.editfigure.EditFigureViewModel
 import com.olcayaras.vidster.ui.screens.video.VideoEvent
@@ -31,7 +33,10 @@ import kotlinx.serialization.Transient
 @Serializable
 sealed class Route {
     @Serializable
-    data object Editor : Route()
+    data object ProjectList : Route()
+
+    @Serializable
+    data class Editor(val projectId: String) : Route()
 
     @Serializable
     data class Video(
@@ -50,7 +55,7 @@ sealed class Route {
     ) : Route()
 
     companion object : NavigationFactory<Route> {
-        override val initialRoute: Route = Editor
+        override val initialRoute: Route = ProjectList
         override val kSerializer: KSerializer<Route> get() = serializer()
 
         override fun createChild(
@@ -59,7 +64,16 @@ sealed class Route {
             navigation: StackNavigation<Route>,
         ): ViewModel<*, *> {
             return when (route) {
-                is Editor -> EditorViewModel(c = componentContext, navigation = navigation)
+                is ProjectList -> ProjectListViewModel(
+                    c = componentContext,
+                    navigation = navigation
+                )
+
+                is Editor -> EditorViewModel(
+                    c = componentContext,
+                    navigation = navigation,
+                    projectId = route.projectId
+                )
 
                 is Video -> VideoViewModel(
                     c = componentContext,
@@ -87,6 +101,11 @@ sealed class Route {
         @Composable
         override fun childContent(viewModel: ViewModel<*, *>) {
             when (viewModel) {
+                is ProjectListViewModel -> {
+                    val state by viewModel.models.collectAsState()
+                    ProjectListScreen(state, viewModel::take)
+                }
+
                 is EditorViewModel -> {
                     val state by viewModel.models.collectAsState()
                     EditorScreen(state, viewModel::take)

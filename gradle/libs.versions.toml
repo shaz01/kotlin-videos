@@ -3,6 +3,7 @@ kotlin = "2.2.20"
 compose = "1.9.0"
 agp = "8.11.2"
 napier = "2.7.1"
+filekit = "0.12.0"
 androidx-activityCompose = "1.11.0"
 androidx-uiTest = "1.9.1"
 hotReload = "1.0.0-beta07"
@@ -53,6 +54,9 @@ koin-logger-slf4j = { group = "io.insert-koin", name = "koin-logger-slf4j", vers
 logback-classic = { group = "ch.qos.logback", name = "logback-classic", version.ref = "logback" }
 kotlin-test-junit = { group = "org.jetbrains.kotlin", name = "kotlin-test-junit", version.ref = "kotlin" }
 molecule = { group = "app.cash.molecule", name = "molecule-runtime", version.ref = "molecule" }
+
+# FileKit for file system operations
+filekit-core = { module = "io.github.vinceglb:filekit-core", version.ref = "filekit" }
 
 [plugins]
 multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
