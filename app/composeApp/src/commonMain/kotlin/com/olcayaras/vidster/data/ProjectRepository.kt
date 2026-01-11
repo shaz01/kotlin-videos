@@ -134,6 +134,20 @@ class ProjectRepository {
     }
 
     /**
+     * Rename a project by ID.
+     */
+    suspend fun renameProject(id: String, newName: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val existingProject = loadProject(id) ?: return@withContext false
+            val updatedProject = existingProject.copy(name = newName)
+            saveProject(updatedProject)
+        } catch (e: Exception) {
+            Napier.e(e) { "Failed to rename project: $id" }
+            false
+        }
+    }
+
+    /**
      * Create a new project with default content.
      */
     suspend fun createNewProject(name: String): VidsterProject = withContext(Dispatchers.IO) {
