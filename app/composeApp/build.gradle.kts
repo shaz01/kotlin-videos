@@ -16,6 +16,7 @@ kotlin {
             implementation(ktorhttp.client.content.negotiation)
             implementation(ktorhttp.serialization)
             implementation(libs.molecule)
+            implementation(libs.filekit.core)
             implementation(project(":figures"))
             implementation(project(":videoscript-previewer"))
             implementation(project(":videoscript-core"))

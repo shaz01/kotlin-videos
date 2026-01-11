@@ -7,7 +7,7 @@
         android:theme="@android:style/Theme.Material.NoActionBar">
         <activity
             android:name="com.olcayaras.vidster.AppActivity"
-            android:screenOrientation="sensorLandscape"
+            android:screenOrientation="unspecified"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
             android:launchMode="singleInstance"
             android:windowSoftInputMode="adjustPan"
