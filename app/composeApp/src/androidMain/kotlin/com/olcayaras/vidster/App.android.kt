@@ -9,8 +9,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import com.olcayaras.vidster.di.initKoin
 import com.arkivanov.decompose.defaultComponentContext
+import com.olcayaras.vidster.di.initKoin
 import com.olcayaras.vidster.ui.App
 import com.olcayaras.vidster.util.ActivityHolder
 
