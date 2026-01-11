@@ -8,7 +8,6 @@ import androidx.compose.ui.unit.dp
 import com.olcayaras.figures.Joint
 import com.olcayaras.figures.SegmentType
 import compose.icons.FeatherIcons
-import compose.icons.feathericons.Plus
 import compose.icons.feathericons.Trash2
 import kotlin.math.PI
 
@@ -23,7 +22,6 @@ fun JointPropertiesPanel(
     onUpdateLength: (Float) -> Unit,
     onUpdateAngle: (Float) -> Unit,
     onUpdateType: (SegmentType) -> Unit,
-    onAddChild: () -> Unit,
     onDelete: () -> Unit,
     canDelete: Boolean
 ) {
@@ -48,7 +46,6 @@ fun JointPropertiesPanel(
                     onUpdateLength = onUpdateLength,
                     onUpdateAngle = onUpdateAngle,
                     onUpdateType = onUpdateType,
-                    onAddChild = onAddChild,
                     onDelete = onDelete,
                     canDelete = canDelete
                 )
@@ -64,7 +61,6 @@ private fun JointPropertyFields(
     onUpdateLength: (Float) -> Unit,
     onUpdateAngle: (Float) -> Unit,
     onUpdateType: (SegmentType) -> Unit,
-    onAddChild: () -> Unit,
     onDelete: () -> Unit,
     canDelete: Boolean
 ) {
@@ -134,38 +130,20 @@ private fun JointPropertyFields(
     Spacer(Modifier.height(8.dp))
 
     // Action buttons
-    Row(
+    OutlinedButton(
+        onClick = onDelete,
+        enabled = canDelete,
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        colors = ButtonDefaults.outlinedButtonColors(
+            contentColor = MaterialTheme.colorScheme.error
+        )
     ) {
-        FilledTonalButton(
-            onClick = onAddChild,
-            modifier = Modifier.weight(1f)
-        ) {
-            Icon(
-                FeatherIcons.Plus,
-                contentDescription = null,
-                modifier = Modifier.size(16.dp)
-            )
-            Spacer(Modifier.width(4.dp))
-            Text("Add Child")
-        }
-
-        OutlinedButton(
-            onClick = onDelete,
-            enabled = canDelete,
-            modifier = Modifier.weight(1f),
-            colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = MaterialTheme.colorScheme.error
-            )
-        ) {
-            Icon(
-                FeatherIcons.Trash2,
-                contentDescription = null,
-                modifier = Modifier.size(16.dp)
-            )
-            Spacer(Modifier.width(4.dp))
-            Text("Delete")
-        }
+        Icon(
+            FeatherIcons.Trash2,
+            contentDescription = null,
+            modifier = Modifier.size(16.dp)
+        )
+        Spacer(Modifier.width(4.dp))
+        Text("Delete")
     }
 }

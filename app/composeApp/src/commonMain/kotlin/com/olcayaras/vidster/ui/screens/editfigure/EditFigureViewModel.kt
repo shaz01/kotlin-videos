@@ -25,12 +25,13 @@ sealed interface EditFigureEvent {
 
     // Joint property editing (for selected joint)
     data class UpdateJointLength(val length: Float) : EditFigureEvent
+    data class UpdateJointLengthForJoint(val jointId: String, val length: Float) : EditFigureEvent
     data class UpdateJointAngle(val angle: Float) : EditFigureEvent
     data class UpdateJointType(val type: SegmentType) : EditFigureEvent
     data class UpdateJointId(val newId: String) : EditFigureEvent
 
     // Hierarchy manipulation
-    data object AddChildJoint : EditFigureEvent
+    data class AddChildJoint(val parentId: String, val type: SegmentType) : EditFigureEvent
     data object DeleteSelectedJoint : EditFigureEvent
 
     // Canvas interaction
@@ -45,6 +46,10 @@ sealed interface EditFigureEvent {
     data object ToggleTemplatesExpanded : EditFigureEvent
     data class ApplyTemplate(val template: FigureTemplate) : EditFigureEvent
 
+    // Add-joint mode
+    data object ToggleAddJointMode : EditFigureEvent
+    data class UpdateNewJointType(val type: SegmentType) : EditFigureEvent
+
     // Actions
     data object Save : EditFigureEvent
     data object Cancel : EditFigureEvent
@@ -56,6 +61,8 @@ data class EditFigureState(
     val canvasState: CanvasState,
     val figureModificationCount: Long,
     val isNewFigure: Boolean,
+    val addJointMode: Boolean,
+    val newJointType: SegmentType,
     val templatesExpanded: Boolean = false
 ) {
     val selectedJoint: Joint?
@@ -84,6 +91,8 @@ class EditFigureViewModel(
     private val _canvasState = MutableStateFlow(CanvasState())
     private val _figureModificationCount = MutableStateFlow(0L)
     private val _templatesExpanded = MutableStateFlow(false)
+    private val _addJointMode = MutableStateFlow(false)
+    private val _newJointType = MutableStateFlow<SegmentType>(SegmentType.Line)
 
     private fun incrementModificationCount() {
         _figureModificationCount.value++
@@ -97,16 +106,17 @@ class EditFigureViewModel(
         val jointId = _selectedJointId.value ?: return
 
         // Joint length is immutable, so we need to replace the joint
-        replaceJoint(jointId) { it.copy(length = length) }
+        updateJointLengthForJoint(jointId, length)
+    }
+
+    private fun updateJointLengthForJoint(jointId: String, length: Float) {
+        replaceJoint(jointId) { it.copy(length = length.coerceAtLeast(0f)) }
         incrementModificationCount()
     }
 
     private fun updateJointAngle(angle: Float) {
         val jointId = _selectedJointId.value ?: return
-        val joint = findJointById(_figure.value.root, jointId) ?: return
-
-        // Joint angle is mutable
-        joint.angle = angle
+        replaceJoint(jointId) { it.copy(angle = angle) }
         incrementModificationCount()
     }
 
@@ -156,8 +166,7 @@ class EditFigureViewModel(
         }
     }
 
-    private fun addChildJoint() {
-        val parentId = _selectedJointId.value ?: return
+    private fun addChildJoint(parentId: String, type: SegmentType) {
         val parent = findJointById(_figure.value.root, parentId) ?: return
 
         val newId = generateUniqueJointId(_figure.value)
@@ -165,7 +174,7 @@ class EditFigureViewModel(
             id = newId,
             length = 30f,
             angle = 0f,
-            type = SegmentType.Line
+            type = type
         )
 
         parent.children += newJoint
@@ -187,7 +196,7 @@ class EditFigureViewModel(
     }
 
     private fun rotateJoint(joint: Joint, newAngle: Float) {
-        joint.angle = newAngle
+        replaceJoint(joint.id) { it.copy(angle = newAngle) }
         incrementModificationCount()
     }
 
@@ -217,16 +226,20 @@ class EditFigureViewModel(
         val canvasState by _canvasState.collectAsState()
         val modCount by _figureModificationCount.collectAsState()
         val templatesExpanded by _templatesExpanded.collectAsState()
+        val addJointMode by _addJointMode.collectAsState()
+        val newJointType by _newJointType.collectAsState()
 
         LaunchedEffect(events) {
             events.collect { event ->
                 when (event) {
                     is EditFigureEvent.SelectJoint -> selectJoint(event.jointId)
                     is EditFigureEvent.UpdateJointLength -> updateJointLength(event.length)
+                    is EditFigureEvent.UpdateJointLengthForJoint ->
+                        updateJointLengthForJoint(event.jointId, event.length)
                     is EditFigureEvent.UpdateJointAngle -> updateJointAngle(event.angle)
                     is EditFigureEvent.UpdateJointType -> updateJointType(event.type)
                     is EditFigureEvent.UpdateJointId -> updateJointId(event.newId)
-                    is EditFigureEvent.AddChildJoint -> addChildJoint()
+                    is EditFigureEvent.AddChildJoint -> addChildJoint(event.parentId, event.type)
                     is EditFigureEvent.DeleteSelectedJoint -> deleteSelectedJoint()
                     is EditFigureEvent.UpdateCanvasState -> _canvasState.value = event.canvasState
                     is EditFigureEvent.RotateJoint -> rotateJoint(event.joint, event.newAngle)
@@ -235,6 +248,9 @@ class EditFigureViewModel(
                     is EditFigureEvent.ToggleTemplatesExpanded ->
                         _templatesExpanded.value = !_templatesExpanded.value
                     is EditFigureEvent.ApplyTemplate -> applyTemplate(event.template)
+                    is EditFigureEvent.ToggleAddJointMode ->
+                        _addJointMode.value = !_addJointMode.value
+                    is EditFigureEvent.UpdateNewJointType -> _newJointType.value = event.type
                     is EditFigureEvent.Save -> onSave(_figure.value)
                     is EditFigureEvent.Cancel -> onCancel()
                 }
@@ -247,6 +263,8 @@ class EditFigureViewModel(
             canvasState = canvasState,
             figureModificationCount = modCount,
             isNewFigure = isNewFigure,
+            addJointMode = addJointMode,
+            newJointType = newJointType,
             templatesExpanded = templatesExpanded
         )
     }

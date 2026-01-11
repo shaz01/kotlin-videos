@@ -17,13 +17,16 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.olcayaras.figures.CanvasState
 import com.olcayaras.figures.CompiledJoint
+import com.olcayaras.figures.SegmentType
 import com.olcayaras.vidster.ui.screens.editfigure.composables.FigureEditorCanvas
 import com.olcayaras.vidster.ui.screens.editfigure.composables.JointPropertiesPanel
+import com.olcayaras.vidster.ui.screens.editfigure.composables.SegmentTypePicker
 import com.olcayaras.vidster.ui.screens.editfigure.composables.TemplatesPicker
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Check
 import compose.icons.feathericons.Edit2
+import compose.icons.feathericons.Plus
 
 private const val MAX_INITIAL_SCALE = 2f
 
@@ -134,10 +137,28 @@ fun EditFigureScreen(
                     selectedJointId = model.selectedJointId,
                     canvasState = model.canvasState,
                     figureModificationCount = model.figureModificationCount,
+                    addJointMode = model.addJointMode,
+                    newJointType = model.newJointType,
                     onCanvasStateChange = { take(EditFigureEvent.UpdateCanvasState(it)) },
                     onJointSelected = { jointId -> take(EditFigureEvent.SelectJoint(jointId)) },
                     onJointRotated = { joint, angle -> take(EditFigureEvent.RotateJoint(joint, angle)) },
+                    onJointResized = { joint, length ->
+                        take(EditFigureEvent.UpdateJointLengthForJoint(joint.id, length))
+                    },
+                    onAddJointRequested = { joint, type ->
+                        take(EditFigureEvent.AddChildJoint(joint.id, type))
+                    },
                     onFigureMoved = { x, y -> take(EditFigureEvent.MoveFigure(x, y)) }
+                )
+
+                AddJointOverlay(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(12.dp),
+                    addJointMode = model.addJointMode,
+                    newJointType = model.newJointType,
+                    onToggleAddJointMode = { take(EditFigureEvent.ToggleAddJointMode) },
+                    onNewJointTypeSelected = { take(EditFigureEvent.UpdateNewJointType(it)) }
                 )
             }
 
@@ -160,7 +181,6 @@ fun EditFigureScreen(
                         onUpdateLength = { take(EditFigureEvent.UpdateJointLength(it)) },
                         onUpdateAngle = { take(EditFigureEvent.UpdateJointAngle(it)) },
                         onUpdateType = { take(EditFigureEvent.UpdateJointType(it)) },
-                        onAddChild = { take(EditFigureEvent.AddChildJoint) },
                         onDelete = { take(EditFigureEvent.DeleteSelectedJoint) },
                         canDelete = model.canDeleteSelectedJoint
                     )
@@ -239,6 +259,47 @@ private fun EditFigureToolbar(
                 Spacer(Modifier.width(4.dp))
                 Text("Save")
             }
+        }
+    }
+}
+
+@Composable
+private fun AddJointOverlay(
+    modifier: Modifier = Modifier,
+    addJointMode: Boolean,
+    newJointType: SegmentType,
+    onToggleAddJointMode: () -> Unit,
+    onNewJointTypeSelected: (SegmentType) -> Unit
+) {
+    Surface(
+        modifier = modifier.widthIn(min = 200.dp, max = 280.dp),
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.95f),
+        tonalElevation = 3.dp,
+        shadowElevation = 4.dp
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            FilterChip(
+                selected = addJointMode,
+                onClick = onToggleAddJointMode,
+                label = { Text(if (addJointMode) "Add Joint: On" else "Add Joint") },
+                leadingIcon = {
+                    Icon(
+                        FeatherIcons.Plus,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            )
+
+            SegmentTypePicker(
+                label = "New joint type",
+                currentType = newJointType,
+                onTypeSelected = onNewJointTypeSelected
+            )
         }
     }
 }

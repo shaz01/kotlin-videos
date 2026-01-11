@@ -16,13 +16,14 @@ import kotlin.math.PI
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SegmentTypePicker(
+    label: String = "Type",
     currentType: SegmentType,
     onTypeSelected: (SegmentType) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
 
     Column {
-        Text("Type", style = MaterialTheme.typography.labelMedium)
+        Text(label, style = MaterialTheme.typography.labelMedium)
         Spacer(Modifier.height(4.dp))
 
         ExposedDropdownMenuBox(
