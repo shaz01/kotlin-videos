@@ -21,8 +21,6 @@ import androidx.compose.ui.input.pointer.positionChanged
 import com.olcayaras.figures.*
 import kotlin.math.atan2
 
-private const val DRAG_THRESHOLD_DISTANCE = 3f
-
 /**
  * Canvas for editing a single figure with selection support.
  * Unlike InfiniteCanvas, this focuses on a single figure and supports joint selection.
@@ -95,7 +93,7 @@ fun FigureEditorCanvas(
                             val change = event.changes.first()
                             if (change.positionChanged()) {
                                 val delta = change.position - change.previousPosition
-                                if (delta.getDistance() > DRAG_THRESHOLD_DISTANCE) {
+                                if (delta.getDistance() > FigureConstants.DRAG_THRESHOLD_DISTANCE) {
                                     hasMoved = true
                                 }
                             }
@@ -121,7 +119,11 @@ fun FigureEditorCanvas(
             compiledJointsForDrawing.forEach { compiled ->
                 val isSelected = compiled.joint.id == selectedJointId
                 val color = if (isSelected) Color(0xFF2196F3) else Color.Black
-                val thickness = if (isSelected) 6f else 4f
+                val thickness = if (isSelected) {
+                    FigureConstants.SELECTED_STROKE_WIDTH
+                } else {
+                    FigureConstants.DEFAULT_STROKE_WIDTH
+                }
                 drawCompiledJoint(compiled, color, thickness)
             }
 
@@ -132,7 +134,11 @@ fun FigureEditorCanvas(
                     val isSelected = compiled.joint.id == selectedJointId
                     drawCircle(
                         color = if (isSelected) Color(0xFF2196F3) else Color.Red,
-                        radius = if (isSelected) 10f else 8f,
+                        radius = if (isSelected) {
+                            FigureConstants.SELECTED_JOINT_HANDLE_RADIUS
+                        } else {
+                            FigureConstants.JOINT_HANDLE_RADIUS
+                        },
                         center = Offset(compiled.endX, compiled.endY)
                     )
                 }

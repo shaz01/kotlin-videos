@@ -142,13 +142,14 @@ fun compileJoints(
     parentWorldAngle: Float = 0f
 ): List<Segment> {
     val worldAngle = parentWorldAngle + root.angle
-    val dx = root.length * cos(worldAngle)
-    val dy = root.length * sin(worldAngle)
+    val scaledLength = root.length * FigureConstants.FIGURE_LENGTH_SCALE
+    val dx = scaledLength * cos(worldAngle)
+    val dy = scaledLength * sin(worldAngle)
 
     val result = root.children.flatMap { child ->
         compileJoints(root = child, startX + dx, startY + dy, worldAngle)
     }
-    return result + Segment(root.length, worldAngle, startX, startY, root.type)
+    return result + Segment(scaledLength, worldAngle, startX, startY, root.type)
 }
 
 fun Joint.compile() = compileJoints(root = this, startX = 0f, startY = 0f)
@@ -192,8 +193,11 @@ val CompiledJoint.centerX: Float
 val CompiledJoint.centerY: Float
     get() = (startY + endY) / 2
 
+val CompiledJoint.scaledLength: Float
+    get() = joint.length * FigureConstants.FIGURE_LENGTH_SCALE
+
 val CompiledJoint.radius: Float
-    get() = joint.length / 2
+    get() = scaledLength / 2
 
 /**
  * Compiles a figure into a list of [CompiledJoint]s with world positions.
@@ -207,8 +211,9 @@ fun compileJointsForEditing(
     parentWorldAngle: Float = 0f
 ): List<CompiledJoint> {
     val worldAngle = parentWorldAngle + joint.angle
-    val endX = startX + joint.length * cos(worldAngle)
-    val endY = startY + joint.length * sin(worldAngle)
+    val scaledLength = joint.length * FigureConstants.FIGURE_LENGTH_SCALE
+    val endX = startX + scaledLength * cos(worldAngle)
+    val endY = startY + scaledLength * sin(worldAngle)
 
     val compiled = CompiledJoint(
         joint = joint,
